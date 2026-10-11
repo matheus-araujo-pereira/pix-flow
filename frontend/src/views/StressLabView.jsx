@@ -48,10 +48,19 @@ export default function StressLabView({ onInspectCharge }) {
       const response = await api.createBatchCharges({ charges: items });
       const clientTotalTime = Math.round(performance.now() - startTime);
 
+      const total = response.totalRequested ?? response.total ?? items.length;
+      const successful = response.totalCreated ?? response.successful ?? 0;
+      const duration = response.totalDurationMs ?? response.durationMs ?? clientTotalTime;
+      const chargesList = response.charges ?? response.results ?? [];
+
       setBatchResult({
         ...response,
+        total,
+        successful,
+        durationMs: duration,
+        charges: chargesList,
         clientTotalTime,
-        throughput: response.durationMs > 0 ? ((response.total / (response.durationMs / 1000))).toFixed(1) : 'N/A'
+        throughput: duration > 0 ? ((total / (duration / 1000))).toFixed(1) : 'N/A'
       });
     } catch (err) {
       setError(err.message || 'Falha ao executar teste de estresse concorrente');
@@ -212,29 +221,35 @@ export default function StressLabView({ onInspectCharge }) {
               {/* Items List */}
               <div className="border border-neutral-800 rounded-md overflow-hidden">
                 <div className="bg-neutral-950 px-3 py-2 text-[11px] font-mono uppercase text-neutral-400 border-b border-neutral-800 flex justify-between">
-                  <span>Itens do Lote #{batchResult.batchId?.substring(0, 8)}</span>
-                  <span>Status</span>
+                  <span>Itens Emitidos no Lote ({batchResult.charges?.length || 0})</span>
+                  <span>Status & Valor</span>
                 </div>
                 <div className="max-h-64 overflow-y-auto divide-y divide-neutral-800/80 text-xs font-mono">
-                  {batchResult.results?.map((item, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => item.chargeId && onInspectCharge(item.chargeId)}
-                      className="p-2.5 bg-neutral-900/60 hover:bg-neutral-800 cursor-pointer flex items-center justify-between transition-colors"
-                    >
-                      <div className="truncate max-w-[280px]">
-                        <span className="text-neutral-500 mr-2">#{idx + 1}</span>
-                        <span className="text-neutral-200">{item.chargeId || 'Falha na emissão'}</span>
+                  {(batchResult.charges || batchResult.results || []).map((item, idx) => {
+                    const chargeId = item.id || item.chargeId;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => chargeId && onInspectCharge(chargeId)}
+                        className="p-2.5 bg-neutral-900/60 hover:bg-neutral-800 cursor-pointer flex items-center justify-between transition-colors"
+                      >
+                        <div className="truncate max-w-[280px]">
+                          <span className="text-neutral-500 mr-2">#{idx + 1}</span>
+                          <span className="text-neutral-200">{chargeId || 'Falha na emissão'}</span>
+                          {item.amount && (
+                            <span className="ml-2 text-neutral-400">R$ {Number(item.amount).toFixed(2).replace('.', ',')}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {item.status ? (
+                            <StatusBadge status={item.status} />
+                          ) : (
+                            <span className="text-rose-400 text-[11px]">{item.error || 'ERRO'}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.status ? (
-                          <StatusBadge status={item.status} />
-                        ) : (
-                          <span className="text-rose-400 text-[11px]">{item.error}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

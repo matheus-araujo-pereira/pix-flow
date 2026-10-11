@@ -324,11 +324,11 @@ export default function TerminalView({ onChargeCreated, onOpenQrCode, onInspectC
                     <textarea
                       readOnly
                       rows={3}
-                      value={lastCreated.emvPayload || ''}
+                      value={lastCreated.qrCodePayload || lastCreated.emvPayload || ''}
                       className="w-full bg-neutral-950 border border-neutral-800 rounded-md p-2 text-xs font-mono text-neutral-300 resize-none outline-none"
                     />
                     <button
-                      onClick={() => handleCopyPayload(lastCreated.emvPayload)}
+                      onClick={() => handleCopyPayload(lastCreated.qrCodePayload || lastCreated.emvPayload)}
                       className="absolute right-2 bottom-3 p-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded text-xs flex items-center gap-1 transition-colors"
                       title="Copiar Payload"
                     >

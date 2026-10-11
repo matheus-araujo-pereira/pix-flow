@@ -97,7 +97,7 @@ export default function TransactionDrawer({ chargeId, onClose }) {
                 <div>
                   <span className="text-xs text-neutral-500 block">Tempo Total</span>
                   <span className="text-xl font-mono font-bold text-emerald-400">
-                    {charge.settlementDurationMs ? `${charge.settlementDurationMs}ms` : 'Em processamento'}
+                    {charge.settlementDurationMs ? `${charge.settlementDurationMs}ms` : (charge.settledAt && charge.createdAt ? `${Math.max(1, Math.round(new Date(charge.settledAt) - new Date(charge.createdAt)))}ms` : (charge.status === 'SETTLED' ? '< 1500ms' : 'Em processamento'))}
                   </span>
                 </div>
               </div>
@@ -178,36 +178,49 @@ export default function TransactionDrawer({ chargeId, onClose }) {
                   {timeline.length === 0 ? (
                     <div className="text-xs text-neutral-500 py-4">Nenhum evento auditado ainda.</div>
                   ) : (
-                    timeline.map((item, idx) => (
-                      <div key={idx} className="relative group">
-                        {/* Bullet */}
-                        <div className={`absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full border-2 bg-neutral-900 ${
-                          item.status === 'SETTLED'
-                            ? 'border-emerald-500 text-emerald-400'
-                            : item.status === 'FAILED'
-                            ? 'border-rose-500 text-rose-400'
-                            : item.status === 'PROCESSING'
-                            ? 'border-amber-500 text-amber-400'
-                            : 'border-neutral-500 text-neutral-400'
-                        }`} />
+                    timeline.map((item, idx) => {
+                      const itemStatus = item.newStatus || item.status || 'PENDING';
+                      const itemAction = item.action || `${item.previousStatus ? item.previousStatus + ' ➔ ' : ''}${item.newStatus || 'REGISTRADO'}`;
+                      const itemTime = item.createdAt || item.timestamp;
 
-                        <div className="bg-neutral-950 border border-neutral-800/80 rounded-md p-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-mono font-semibold text-neutral-200">{item.action}</span>
-                            <span className="font-mono text-neutral-500">
-                              {new Date(item.timestamp).toLocaleTimeString('pt-BR')}
-                            </span>
-                          </div>
-                          <p className="text-xs text-neutral-400 mt-1">{item.details}</p>
-                          {item.workerId && (
-                            <div className="mt-2 text-[11px] font-mono text-neutral-500 flex items-center gap-1.5">
-                              <Terminal className="w-3 h-3 text-neutral-600" />
-                              <span>Worker: {item.workerId}</span>
+                      return (
+                        <div key={idx} className="relative group">
+                          {/* Bullet */}
+                          <div className={`absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full border-2 bg-neutral-900 ${
+                            itemStatus === 'SETTLED'
+                              ? 'border-emerald-500 text-emerald-400'
+                              : itemStatus === 'FAILED'
+                              ? 'border-rose-500 text-rose-400'
+                              : itemStatus === 'PROCESSING'
+                              ? 'border-amber-500 text-amber-400'
+                              : 'border-neutral-500 text-neutral-400'
+                          }`} />
+
+                          <div className="bg-neutral-950 border border-neutral-800/80 rounded-md p-3">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-mono font-semibold text-neutral-200">
+                                {itemAction}
+                                {item.latencyMs > 0 && (
+                                  <span className="ml-2 text-[10px] text-emerald-400 font-normal">
+                                    +{item.latencyMs}ms
+                                  </span>
+                                )}
+                              </span>
+                              <span className="font-mono text-neutral-500">
+                                {itemTime ? new Date(itemTime).toLocaleTimeString('pt-BR') : '---'}
+                              </span>
                             </div>
-                          )}
+                            <p className="text-xs text-neutral-400 mt-1">{item.details}</p>
+                            {item.workerId && (
+                              <div className="mt-2 text-[11px] font-mono text-neutral-500 flex items-center gap-1.5">
+                                <Terminal className="w-3 h-3 text-neutral-600" />
+                                <span>Worker: {item.workerId}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               ) : (

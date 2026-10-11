@@ -13,7 +13,12 @@ import { api } from './services/api';
 import { AlertCircle, CheckCircle2, ServerCrash } from 'lucide-react';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState('terminal'); // 'terminal' | 'ledger' | 'stress' | 'webhooks' | 'tutorial'
+  const getInitialTab = () => {
+    const hash = window.location.hash.replace('#', '');
+    return ['terminal', 'ledger', 'stress', 'webhooks', 'tutorial'].includes(hash) ? hash : 'terminal';
+  };
+
+  const [currentTab, setCurrentTab] = useState(getInitialTab);
   const [metrics, setMetrics] = useState(null);
   const [latency, setLatency] = useState(null);
   const [isOnline, setIsOnline] = useState(true);
@@ -22,6 +27,22 @@ export default function App() {
   const [isArchOpen, setIsArchOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [toast, setToast] = useState(null);
+
+  const handleSelectTab = (tab) => {
+    setCurrentTab(tab);
+    window.location.hash = tab;
+  };
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (['terminal', 'ledger', 'stress', 'webhooks', 'tutorial'].includes(hash)) {
+        setCurrentTab(hash);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -82,7 +103,7 @@ export default function App() {
       <div>
         <Navbar
           currentTab={currentTab}
-          onSelectTab={setCurrentTab}
+          onSelectTab={handleSelectTab}
           latency={latency}
           isOnline={isOnline}
           onOpenArchitecture={() => setIsArchOpen(true)}
@@ -132,7 +153,7 @@ export default function App() {
 
             {currentTab === 'tutorial' && (
               <TutorialView
-                onNavigate={setCurrentTab}
+                onNavigate={handleSelectTab}
                 onInspectCharge={(id) => setSelectedInspectId(id)}
               />
             )}

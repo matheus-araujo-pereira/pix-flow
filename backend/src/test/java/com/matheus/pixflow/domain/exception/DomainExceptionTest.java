@@ -30,3 +30,4 @@ class DomainExceptionTest {
         assertTrue(notFoundTx.getMessage().contains("tx12345"));
     }
 }
+

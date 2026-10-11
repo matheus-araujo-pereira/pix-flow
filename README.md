@@ -37,7 +37,7 @@ Projetado sob os princípios de **Clean Architecture (Arquitetura Hexagonal)** e
 - **Webhooks com Assinatura Criptográfica HMAC-SHA256**: Despacho de eventos `PIX.SETTLED` e `PIX.FAILED` com cabeçalho `X-Signature-SHA256` para garantia de autenticidade e integridade no destino.
 - **Linha do Tempo e Auditoria Imutável**: Endpoint `/api/v1/charges/{id}/timeline` detalhando cada etapa do worker (`CREATED` ➔ `SQS_ENQUEUED` ➔ `SETTLEMENT_STARTED` ➔ `SETTLED`) e exportação completa do livro-razão em CSV.
 - **DevOps & Portabilidade Híbrida**: Provisionamento declarativo via **Terraform** compatível tanto com **AWS Free Tier** quanto com **LocalStack**, viabilizando hospedagem em nuvem **100% gratuita no Render, Neon e Vercel**.
-- **Engenharia de Qualidade**: 137 testes automatizados (unitários de domínio, validação canônica Módulo 11, serviços, controllers WebMvc com MockMvc e workers assíncronos) atingindo **100% de cobertura de código (100% de instruções e 100% de branches) verificada via JaCoCo** na esteira de CI/CD.
+- **Engenharia de Qualidade**: 141 testes automatizados (unitários de domínio, validação canônica Módulo 11, serviços, controllers WebMvc com MockMvc e workers assíncronos) atingindo **100% de cobertura de código (3.427/3.427 instruções e 173/173 branches) verificada via JaCoCo** na esteira de CI/CD.
 
 ---
 
@@ -162,7 +162,7 @@ pix-flow/
 │   │   │       └── db/migration/
 │   │   │           ├── V1__init_schema.sql        # Esquema de charges e settlement_audit_logs
 │   │   │           └── V2__webhook_deliveries.sql # Esquema de auditoria de webhooks
-│   │   └── test/java/com/matheus/pixflow/         # 137 Testes Unitários e MockMvc (100% Cobertura)
+│   │   └── test/java/com/matheus/pixflow/         # 141 Testes Unitários e MockMvc (100% Cobertura)
 │   ├── Dockerfile                   # Multi-Stage Build (JDK 21 compile -> JRE 21 Alpine runner)
 │   ├── pom.xml                      # Dependências Maven e Plugin JaCoCo (100% Cobertura)
 │   └── mvnw                         # Maven Wrapper oficial
@@ -172,7 +172,7 @@ pix-flow/
 │   │   │   ├── TerminalView.jsx     # Emissão PIX com validação Módulo 11 e sample keys
 │   │   │   ├── LedgerView.jsx       # Livro-Razão de alta densidade e exportação CSV
 │   │   │   ├── StressLabView.jsx    # Gerador de concorrência e carga em lote
-│   │   │   ├── WebhooksView.jsx     # Rastreamento de entregas de webhooks e HMAC
+│   │   │   ├── WebhooksView.jsx     # Rastreamento de entregas, HMAC-SHA256 e teste de adulteração
 │   │   │   └── TutorialView.jsx     # Roteiro interativo de testes com 6 botões 1-clique
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx           # Navegação institucional fintech e telemetria
@@ -184,8 +184,10 @@ pix-flow/
 │   │   ├── utils/
 │   │   │   └── validators.js        # Validadores canônicos Módulo 11 no frontend
 │   │   ├── services/api.js          # Cliente HTTP unificado
-│   │   ├── App.jsx                  # Coordenador de estado SPA
+│   │   ├── App.jsx                  # Coordenador de estado SPA com navegação por URLs Hash
 │   │   └── main.jsx
+│   ├── nginx.conf                   # Configuração Nginx de produção (SPA fallback, proxy reverso, gzip)
+│   ├── Dockerfile                   # Multi-stage build Node -> Nginx Alpine
 │   ├── package.json                 # React 18, Vite 5, Tailwind CSS, Lucide Icons, QRCode.react
 │   ├── tailwind.config.js
 │   └── vite.config.js
@@ -215,8 +217,9 @@ A documentação interativa com Swagger UI está acessível em `/swagger-ui.html
 | `POST` | `/api/v1/charges/{id}/cancel` | Cancela uma cobrança em estado `PENDING` | `200 OK` | `404`, `409` |
 | `POST` | `/api/v1/charges/{id}/settle` | Simula compensação bancária forçada imediata | `200 OK` | `404`, `409` |
 | `GET` | `/api/v1/webhooks` | Lista histórico de webhooks disparados pelo motor | `200 OK` | `500` |
-| `GET` | `/api/v1/webhooks/{id}` | Consulta detalhes e assinatura HMAC de um webhook | `200 OK` | `404` |
-| `POST` | `/api/v1/webhooks/{id}/replay` | Simula reenvio (replay) de uma notificação | `200 OK` | `404` |
+| `GET` | `/api/v1/webhooks/charges/{chargeId}` | Consulta webhooks emitidos para uma cobrança específica | `200 OK` | `404` |
+| `POST` | `/api/v1/webhooks/{id}/replay` | Simula reenvio (replay) seguro de uma notificação | `200 OK` | `404` |
+| `POST` | `/api/v1/webhooks/verify` | Valida autenticidade criptográfica de um payload HMAC-SHA256 | `200 OK` | `400` |
 | `GET` | `/api/v1/metrics` | Retorna métricas de volume, latência e fila | `200 OK` | `500` |
 | `GET` | `/actuator/health` | Healthcheck do Spring Boot Actuator | `200 OK` | `503` |
 

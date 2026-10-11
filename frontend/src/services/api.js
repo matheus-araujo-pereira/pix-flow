@@ -77,7 +77,7 @@ export const api = {
 
   // Webhooks
   async listWebhooks(page = 0, size = 50) {
-    return request(`/api/v1/webhooks?page=${page}&size=${size}`);
+    return request(`/api/v1/webhooks?limit=${size}`);
   },
 
   async getWebhookById(id) {
@@ -87,6 +87,13 @@ export const api = {
   async replayWebhook(id) {
     return request(`/api/v1/webhooks/${id}/replay`, {
       method: 'POST',
+    });
+  },
+
+  async verifyWebhookSignature(payload, signature) {
+    return request('/api/v1/webhooks/verify', {
+      method: 'POST',
+      body: JSON.stringify({ payload, signature }),
     });
   },
 

@@ -14,8 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+import com.matheus.pixflow.domain.exception.ChargeNotFoundException;
+
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -111,5 +114,39 @@ class WebhookDispatcherServiceTest {
     void shouldThrowWhenSecretKeyIsNull() {
         WebhookDispatcherService brokenService = new WebhookDispatcherService(webhookRepository, objectMapper, null);
         assertThrows(IllegalStateException.class, () -> brokenService.verifySignature("payload", "sig"));
+    }
+
+    @Test
+    @DisplayName("Should replay existing webhook delivery successfully")
+    void shouldReplayWebhookSuccessfully() {
+        UUID deliveryId = UUID.randomUUID();
+        UUID chargeId = UUID.randomUUID();
+        WebhookDeliveryJpaEntity original = WebhookDeliveryJpaEntity.create(
+                chargeId,
+                "PIX_PAYMENT_SETTLED",
+                "{\"status\":\"SETTLED\"}",
+                "sha256=old_signature",
+                "DELIVERED",
+                200
+        );
+
+        when(webhookRepository.findById(deliveryId)).thenReturn(Optional.of(original));
+        when(webhookRepository.save(any(WebhookDeliveryJpaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var replayed = service.replay(deliveryId);
+
+        assertNotNull(replayed);
+        assertEquals(chargeId, replayed.chargeId());
+        assertEquals("PIX_PAYMENT_SETTLED.REPLAY", replayed.eventType());
+        assertTrue(replayed.signature().startsWith("sha256="));
+    }
+
+    @Test
+    @DisplayName("Should throw ChargeNotFoundException when replaying non-existent webhook")
+    void shouldThrowWhenReplayNotFound() {
+        UUID deliveryId = UUID.randomUUID();
+        when(webhookRepository.findById(deliveryId)).thenReturn(Optional.empty());
+
+        assertThrows(ChargeNotFoundException.class, () -> service.replay(deliveryId));
     }
 }

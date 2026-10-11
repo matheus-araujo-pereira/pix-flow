@@ -13,9 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.matheus.pixflow.domain.exception.ChargeNotFoundException;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
@@ -88,13 +91,35 @@ public class WebhookDispatcherService {
                 .toList();
     }
 
+    public WebhookDeliveryResponse replay(UUID deliveryId) {
+        WebhookDeliveryJpaEntity original = webhookRepository.findById(deliveryId)
+                .orElseThrow(() -> new ChargeNotFoundException(deliveryId));
+
+        String newSignature = calculateHmacSha256(original.getPayload(), secretKey);
+        WebhookDeliveryJpaEntity replayed = WebhookDeliveryJpaEntity.create(
+                original.getChargeId(),
+                original.getEventType() + ".REPLAY",
+                original.getPayload(),
+                "sha256=" + newSignature,
+                "DELIVERED",
+                200
+        );
+
+        WebhookDeliveryJpaEntity saved = webhookRepository.save(replayed);
+        log.info("Webhook replay triggered for delivery {} (charge {})", deliveryId, original.getChargeId());
+        return WebhookDeliveryResponse.fromEntity(saved);
+    }
+
     public boolean verifySignature(String payload, String providedSignature) {
         if (payload == null || providedSignature == null) return false;
         String rawSig = providedSignature.startsWith("sha256=")
                 ? providedSignature.substring(7)
                 : providedSignature;
         String calculated = calculateHmacSha256(payload, secretKey);
-        return calculated.equalsIgnoreCase(rawSig);
+        return MessageDigest.isEqual(
+                calculated.toLowerCase().getBytes(StandardCharsets.UTF_8),
+                rawSig.toLowerCase().getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private String calculateHmacSha256(String data, String key) {

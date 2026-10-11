@@ -96,4 +96,48 @@ class WebhookControllerTest {
                 .andExpect(jsonPath("$.valid").value(true))
                 .andExpect(jsonPath("$.algorithm").value("HmacSHA256"));
     }
+
+    @Test
+    @DisplayName("Deve listar webhooks no endpoint raiz GET /api/v1/webhooks")
+    void shouldListWebhooksAtRoot() throws Exception {
+        WebhookDeliveryResponse response = new WebhookDeliveryResponse(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "PIX_PAYMENT_SETTLED",
+                "{}",
+                "sha256=abcdef",
+                "DELIVERED",
+                200,
+                Instant.now()
+        );
+
+        when(webhookDispatcherService.getRecentDeliveries(20)).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/v1/webhooks?limit=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].eventType").value("PIX_PAYMENT_SETTLED"));
+    }
+
+    @Test
+    @DisplayName("Deve reenviar webhook via POST /api/v1/webhooks/{id}/replay")
+    void shouldReplayWebhook() throws Exception {
+        UUID deliveryId = UUID.randomUUID();
+        WebhookDeliveryResponse response = new WebhookDeliveryResponse(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "PIX_PAYMENT_SETTLED.REPLAY",
+                "{}",
+                "sha256=replay_sig",
+                "DELIVERED",
+                200,
+                Instant.now()
+        );
+
+        when(webhookDispatcherService.replay(deliveryId)).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/webhooks/" + deliveryId + "/replay"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventType").value("PIX_PAYMENT_SETTLED.REPLAY"));
+    }
 }
+

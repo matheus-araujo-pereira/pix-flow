@@ -24,20 +24,33 @@ public class WebhookController {
         this.webhookDispatcherService = webhookDispatcherService;
     }
 
-    @GetMapping("/deliveries")
+    @GetMapping
     @Operation(summary = "Listar notificações de webhooks recentes", description = "Recupera o histórico de eventos de webhook despachados para os clientes externos.")
     @ApiResponse(responseCode = "200", description = "Lista de webhooks recuperada")
+    public ResponseEntity<List<WebhookDeliveryResponse>> listWebhooks(
+            @Parameter(description = "Limite de registros a retornar (1 a 50)") @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(webhookDispatcherService.getRecentDeliveries(limit));
+    }
+
+    @GetMapping("/deliveries")
+    @Operation(summary = "Listar entregas de webhook (alias)", description = "Alias para /api/v1/webhooks para compatibilidade retroativa.")
     public ResponseEntity<List<WebhookDeliveryResponse>> getDeliveries(
             @Parameter(description = "Limite de registros a retornar (1 a 50)") @RequestParam(defaultValue = "20") int limit
     ) {
-        List<WebhookDeliveryResponse> deliveries = webhookDispatcherService.getRecentDeliveries(limit);
-        return ResponseEntity.ok(deliveries);
+        return ResponseEntity.ok(webhookDispatcherService.getRecentDeliveries(limit));
     }
 
     @GetMapping("/charges/{chargeId}")
     @Operation(summary = "Listar webhooks por ID de cobrança", description = "Recupera os webhooks enviados para uma cobrança específica.")
     public ResponseEntity<List<WebhookDeliveryResponse>> getDeliveriesByCharge(@PathVariable UUID chargeId) {
         return ResponseEntity.ok(webhookDispatcherService.getDeliveriesByCharge(chargeId));
+    }
+
+    @PostMapping("/{id}/replay")
+    @Operation(summary = "Reenviar notificação de webhook", description = "Re-despacha um webhook existente gerando um novo evento assinado com timestamp e HMAC-SHA256.")
+    public ResponseEntity<WebhookDeliveryResponse> replayWebhook(@PathVariable UUID id) {
+        return ResponseEntity.ok(webhookDispatcherService.replay(id));
     }
 
     @PostMapping("/verify")

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Radio, RefreshCw, ShieldCheck, Check, Copy, AlertCircle, Play, ChevronRight, Terminal } from 'lucide-react';
+import { Radio, RefreshCw, ShieldCheck, Check, Copy, AlertCircle, Play, ChevronRight, Terminal, KeyRound } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function WebhooksView() {
@@ -10,19 +10,35 @@ export default function WebhooksView() {
   const [replayingId, setReplayingId] = useState(null);
   const [copiedSig, setCopiedSig] = useState(false);
 
+  // Verifier tool state
+  const [verifyPayload, setVerifyPayload] = useState('');
+  const [verifySignature, setVerifySignature] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
+
   const fetchWebhooks = async () => {
     try {
       setError(null);
       const data = await api.listWebhooks(0, 50);
-      setDeliveries(data || []);
-      if (data && data.length > 0 && !selectedWebhook) {
-        setSelectedWebhook(data[0]);
+      const items = Array.isArray(data) ? data : (data?.content || []);
+      setDeliveries(items);
+      if (items.length > 0 && !selectedWebhook) {
+        selectAndInit(items[0]);
       }
     } catch (err) {
       setError(err.message || 'Falha ao sincronizar entregas de webhooks');
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectAndInit = (w) => {
+    setSelectedWebhook(w);
+    const payloadText = w.payload || w.payloadJson || '';
+    const sigText = w.signature || w.signatureSha256 || '';
+    setVerifyPayload(payloadText);
+    setVerifySignature(sigText);
+    setVerifyResult(null);
   };
 
   useEffect(() => {
@@ -34,7 +50,7 @@ export default function WebhooksView() {
       setReplayingId(id);
       await api.replayWebhook(id);
       await fetchWebhooks();
-      alert('Webhook reenviado com sucesso!');
+      alert('Webhook reenviado com sucesso! Um novo evento assinado foi adicionado ao log.');
     } catch (err) {
       alert(`Falha no reenvio: ${err.message}`);
     } finally {
@@ -48,6 +64,38 @@ export default function WebhooksView() {
     setTimeout(() => setCopiedSig(false), 2000);
   };
 
+  const handleVerify = async () => {
+    if (!verifyPayload || !verifySignature) {
+      alert('Preencha o Payload e a Assinatura HMAC antes de validar.');
+      return;
+    }
+    setVerifyLoading(true);
+    setVerifyResult(null);
+    try {
+      const res = await api.verifyWebhookSignature(verifyPayload, verifySignature);
+      setVerifyResult(res);
+    } catch (err) {
+      setVerifyResult({ valid: false, error: err.message });
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleTamperPayload = () => {
+    try {
+      const parsed = JSON.parse(verifyPayload);
+      if (parsed.amount) {
+        parsed.amount = (parseFloat(parsed.amount) + 1000.00).toFixed(2);
+      } else {
+        parsed.tampered = true;
+      }
+      setVerifyPayload(JSON.stringify(parsed, null, 2));
+    } catch {
+      setVerifyPayload(verifyPayload + ' [ADULTERADO]');
+    }
+    setVerifyResult(null);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
@@ -59,10 +107,10 @@ export default function WebhooksView() {
             <span className="text-neutral-300">WEBHOOK DISPATCHER & HMAC-SHA256</span>
           </div>
           <h1 className="text-xl font-semibold text-neutral-100 tracking-tight">
-            Auditoria de Webhooks & Assinaturas
+            Auditoria de Webhooks & Assinaturas Criptográficas
           </h1>
           <p className="text-xs text-neutral-400 mt-1">
-            Rastreamento de notificações assíncronas enviadas aos parceiros bancários com autenticação criptográfica HMAC-SHA256.
+            Rastreamento de notificações assíncronas enviadas aos parceiros bancários com autenticação imutável via HMAC-SHA256 e replay seguro.
           </p>
         </div>
 
@@ -92,7 +140,7 @@ export default function WebhooksView() {
             <span>Status</span>
           </div>
 
-          <div className="divide-y divide-neutral-800/80 max-h-[520px] overflow-y-auto">
+          <div className="divide-y divide-neutral-800/80 max-h-[560px] overflow-y-auto">
             {loading && deliveries.length === 0 ? (
               <div className="p-8 text-center text-xs font-mono text-neutral-500">
                 Carregando webhooks...
@@ -102,39 +150,44 @@ export default function WebhooksView() {
                 <Radio className="w-6 h-6 mx-auto text-neutral-600" />
                 <p>Nenhum webhook disparado ainda.</p>
                 <p className="text-[11px] text-neutral-600">
-                  Emita uma cobrança informando uma URL de webhook ou aguarde a liquidação de uma transação.
+                  Emita uma cobrança informando uma URL de webhook ou simule a liquidação para gerar notificações automáticas.
                 </p>
               </div>
             ) : (
-              deliveries.map((w) => (
-                <div
-                  key={w.id}
-                  onClick={() => setSelectedWebhook(w)}
-                  className={`p-3 text-xs font-mono cursor-pointer transition-colors ${
-                    selectedWebhook?.id === w.id
-                      ? 'bg-neutral-800/80 border-l-2 border-emerald-500'
-                      : 'hover:bg-neutral-800/40 bg-neutral-900'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-neutral-200">{w.eventType}</span>
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${
-                      w.responseStatus >= 200 && w.responseStatus < 300
-                        ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
-                        : 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
-                    }`}>
-                      HTTP {w.responseStatus}
-                    </span>
+              deliveries.map((w) => {
+                const statusHttp = w.responseCode || w.responseStatus || 200;
+                const sig = w.signature || w.signatureSha256 || '';
+                const date = w.createdAt || w.dispatchedAt;
+                return (
+                  <div
+                    key={w.id}
+                    onClick={() => selectAndInit(w)}
+                    className={`p-3 text-xs font-mono cursor-pointer transition-colors ${
+                      selectedWebhook?.id === w.id
+                        ? 'bg-neutral-800/80 border-l-2 border-emerald-500'
+                        : 'hover:bg-neutral-800/40 bg-neutral-900'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-neutral-200">{w.eventType}</span>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded font-mono ${
+                        statusHttp >= 200 && statusHttp < 300
+                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
+                          : 'bg-rose-950/60 text-rose-400 border border-rose-800/60'
+                      }`}>
+                        HTTP {statusHttp}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-neutral-400 truncate mb-1">
+                      ID: {w.id?.substring(0, 8)}... • Cobrança: {w.chargeId?.substring(0, 8)}...
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-neutral-500">
+                      <span>Status: {w.status || 'SENT'}</span>
+                      <span>{date ? new Date(date).toLocaleTimeString('pt-BR') : '--:--'}</span>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-neutral-400 truncate mb-1">
-                    {w.targetUrl}
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-neutral-500">
-                    <span>Latência: {w.latencyMs}ms</span>
-                    <span>{new Date(w.dispatchedAt).toLocaleTimeString('pt-BR')}</span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -150,7 +203,7 @@ export default function WebhooksView() {
                 onClick={() => handleReplay(selectedWebhook.id)}
                 disabled={replayingId === selectedWebhook.id}
                 className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-mono rounded flex items-center gap-1.5 transition-colors"
-                title="Simular reenvio deste webhook"
+                title="Re-despachar este webhook com novo hash e timestamp"
               >
                 <Play className="w-3 h-3 text-emerald-400" />
                 <span>{replayingId === selectedWebhook.id ? 'Reenviando...' : 'Replay Webhook'}</span>
@@ -160,29 +213,6 @@ export default function WebhooksView() {
 
           {selectedWebhook ? (
             <div className="space-y-4">
-              {/* Security info */}
-              <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-md space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="font-semibold">Assinatura HMAC-SHA256 (Header X-Signature-SHA256)</span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    readOnly
-                    value={selectedWebhook.signatureSha256 || 'Assinatura gerada no despacho'}
-                    className="w-full bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-xs rounded px-2.5 py-1.5 pr-8 outline-none select-all"
-                  />
-                  <button
-                    onClick={() => handleCopySignature(selectedWebhook.signatureSha256)}
-                    className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-100"
-                    title="Copiar Assinatura"
-                  >
-                    {copiedSig ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
               {/* Delivery Meta Grid */}
               <div className="grid grid-cols-2 gap-3 text-xs font-mono">
                 <div className="p-2.5 bg-neutral-950 border border-neutral-800 rounded">
@@ -195,20 +225,123 @@ export default function WebhooksView() {
                 </div>
               </div>
 
+              {/* Security info */}
+              <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-md space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span className="font-semibold">Assinatura HMAC-SHA256 (Header X-Signature-SHA256)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-neutral-500">Hash SHA256 (64 hex)</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    readOnly
+                    value={selectedWebhook.signature || selectedWebhook.signatureSha256 || 'Assinatura gerada no despacho'}
+                    className="w-full bg-neutral-900 border border-neutral-800 text-neutral-300 font-mono text-xs rounded px-2.5 py-1.5 pr-8 outline-none select-all"
+                  />
+                  <button
+                    onClick={() => handleCopySignature(selectedWebhook.signature || selectedWebhook.signatureSha256)}
+                    className="absolute right-2 top-2 text-neutral-400 hover:text-neutral-100"
+                    title="Copiar Assinatura"
+                  >
+                    {copiedSig ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
               {/* Raw Payload Preview */}
               <div>
                 <span className="text-xs font-mono text-neutral-400 block mb-1.5">
                   Payload JSON Enviado no POST:
                 </span>
-                <pre className="p-4 bg-neutral-950 border border-neutral-800 rounded-md text-xs font-mono text-neutral-300 overflow-x-auto max-h-72">
+                <pre className="p-3 bg-neutral-950 border border-neutral-800 rounded-md text-xs font-mono text-neutral-300 overflow-x-auto max-h-48">
                   {(() => {
+                    const raw = selectedWebhook.payload || selectedWebhook.payloadJson || '{}';
                     try {
-                      return JSON.stringify(JSON.parse(selectedWebhook.payloadJson), null, 2);
+                      return JSON.stringify(JSON.parse(raw), null, 2);
                     } catch {
-                      return selectedWebhook.payloadJson;
+                      return raw;
                     }
                   })()}
                 </pre>
+              </div>
+
+              {/* Interactive Verifier & Tamper Simulation Tool */}
+              <div className="p-4 bg-neutral-950 border border-neutral-800 rounded-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-neutral-200">
+                    <KeyRound className="w-4 h-4 text-sky-400" />
+                    <span className="font-semibold">Laboratório de Verificação de Integridade Criptográfica</span>
+                  </div>
+                  <button
+                    onClick={handleTamperPayload}
+                    className="text-[11px] font-mono text-amber-400 hover:text-amber-300 underline"
+                    title="Altera o valor do payload para demonstrar rejeição de fraude por HMAC"
+                  >
+                    Simular Fraude / Adulteração
+                  </button>
+                </div>
+
+                <div className="space-y-2 text-xs font-mono">
+                  <div>
+                    <label className="text-[11px] text-neutral-500 block mb-1">Payload sob Verificação:</label>
+                    <textarea
+                      value={verifyPayload}
+                      onChange={(e) => {
+                        setVerifyPayload(e.target.value);
+                        setVerifyResult(null);
+                      }}
+                      rows={3}
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded p-2 text-neutral-200 font-mono text-xs focus:outline-none focus:border-neutral-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-neutral-500 block mb-1">Assinatura HMAC Fornecida:</label>
+                    <input
+                      type="text"
+                      value={verifySignature}
+                      onChange={(e) => {
+                        setVerifySignature(e.target.value);
+                        setVerifyResult(null);
+                      }}
+                      className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-neutral-200 font-mono text-xs focus:outline-none focus:border-neutral-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      onClick={handleVerify}
+                      disabled={verifyLoading}
+                      className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 rounded text-xs font-mono flex items-center gap-1.5 transition-colors"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                      <span>{verifyLoading ? 'Validando...' : 'Verificar com API Backend'}</span>
+                    </button>
+
+                    {verifyResult && (
+                      <div className={`px-2.5 py-1 rounded text-xs font-mono flex items-center gap-1.5 ${
+                        verifyResult.valid
+                          ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-400'
+                          : 'bg-rose-950/80 border border-rose-800 text-rose-400'
+                      }`}>
+                        {verifyResult.valid ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Assinatura VÁLIDA (Autêntica)</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Assinatura INVÁLIDA (Adulterada)</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -222,4 +355,3 @@ export default function WebhooksView() {
     </div>
   );
 }
-

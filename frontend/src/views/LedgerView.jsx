@@ -19,7 +19,8 @@ export default function LedgerView({ onInspectCharge, refreshTrigger }) {
     try {
       setError(null);
       const data = await api.listCharges(0, 50);
-      setCharges(data || []);
+      const items = Array.isArray(data) ? data : (data?.content || []);
+      setCharges(items);
     } catch (err) {
       setError(err.message || 'Falha ao sincronizar livro-razão');
     } finally {

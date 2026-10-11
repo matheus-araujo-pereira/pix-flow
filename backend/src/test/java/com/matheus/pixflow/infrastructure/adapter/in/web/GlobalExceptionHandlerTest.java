@@ -91,3 +91,4 @@ class GlobalExceptionHandlerTest {
         assertEquals("An unexpected internal error occurred. Please contact system support.", response.getBody().message());
     }
 }
+
