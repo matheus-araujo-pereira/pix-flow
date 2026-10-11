@@ -1,0 +1,89 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. PostgreSQL Database
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: pixflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pixflow
+      POSTGRES_USER: pixflow
+      POSTGRES_PASSWORD: pixflow_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pixflow -d pixflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 2. LocalStack AWS SQS Emulation (100% Free Local AWS Cloud)
+  # ----------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:3.7
+    container_name: pixflow-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh:ro
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 3. Core Backend (Java 21 + Spring Boot 3.3.4)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pixflow-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - DB_URL=jdbc:postgresql://postgres:5432/pixflow
+      - DB_USER=pixflow
+      - DB_PASSWORD=pixflow_secret
+      - PIXFLOW_MESSAGING_PROVIDER=sqs
+      - AWS_REGION=us-east-1
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_SQS_QUEUE_URL=http://localstack:4566/000000000000/pix-settlement-queue
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:80
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # 4. Frontend SPA (React + Vite + Tailwind)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pixflow-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  localstack_data:

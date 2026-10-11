@@ -1,0 +1,17 @@
+# ==============================================================================
+# PixFlow: Terraform Variables Example
+# Duplicate as 'terraform.tfvars' to customize
+# ==============================================================================
+
+aws_region          = "us-east-1"
+environment         = "dev"
+project_name        = "pixflow"
+instance_type       = "t3.micro" # Free Tier eligible
+
+sqs_queue_name      = "pix-settlement-queue"
+sqs_dlq_name        = "pix-settlement-dlq"
+s3_bucket_name      = "pixflow-settlement-receipts-demo"
+
+# Set to true when running against LocalStack (100% Free locally)
+use_localstack      = false
+localstack_endpoint = "http://localhost:4566"
