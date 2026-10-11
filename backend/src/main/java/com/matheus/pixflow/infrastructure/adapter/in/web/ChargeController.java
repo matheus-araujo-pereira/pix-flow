@@ -114,5 +114,25 @@ public class ChargeController {
         ChargeResponse response = settleChargeUseCase.triggerSettlement(id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{id}/timeline")
+    @Operation(summary = "Consultar linha do tempo de auditoria da cobrança", description = "Retorna todos os eventos cronológicos de transição de estado da transação.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Linha do tempo recuperada"),
+            @ApiResponse(responseCode = "404", description = "Cobrança não encontrada")
+    })
+    public ResponseEntity<java.util.List<com.matheus.pixflow.application.dto.ChargeAuditLogResponse>> getTimeline(@PathVariable UUID id) {
+        return ResponseEntity.ok(getChargeUseCase.getTimeline(id));
+    }
+
+    @GetMapping(value = "/export", produces = "text/csv")
+    @Operation(summary = "Exportar extrato financeiro do ledger em CSV", description = "Gera um relatório CSV estruturado contendo todas as cobranças registradas no banco.")
+    @ApiResponse(responseCode = "200", description = "Arquivo CSV gerado com sucesso")
+    public ResponseEntity<String> exportCsv() {
+        String csv = getChargeUseCase.exportCsv();
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pixflow-extrato.csv\"")
+                .body(csv);
+    }
 }
 

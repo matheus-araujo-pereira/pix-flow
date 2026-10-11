@@ -25,6 +25,7 @@ public class SettlementEngineService implements SettleChargeUseCase {
 
     private final ChargeRepositoryPort chargeRepository;
     private final SettlementAuditPort auditPort;
+    private final WebhookDispatcherService webhookDispatcher;
 
     private final long minDelayMs;
     private final long maxDelayMs;
@@ -33,12 +34,14 @@ public class SettlementEngineService implements SettleChargeUseCase {
     public SettlementEngineService(
             ChargeRepositoryPort chargeRepository,
             SettlementAuditPort auditPort,
+            WebhookDispatcherService webhookDispatcher,
             @Value("${pixflow.settlement.simulation-delay-min-ms:600}") long minDelayMs,
             @Value("${pixflow.settlement.simulation-delay-max-ms:1500}") long maxDelayMs,
             @Value("${pixflow.settlement.failure-threshold-amount:50000.00}") BigDecimal failureThreshold
     ) {
         this.chargeRepository = chargeRepository;
         this.auditPort = auditPort;
+        this.webhookDispatcher = webhookDispatcher;
         this.minDelayMs = minDelayMs;
         this.maxDelayMs = maxDelayMs;
         this.failureThreshold = failureThreshold;
@@ -100,6 +103,12 @@ public class SettlementEngineService implements SettleChargeUseCase {
                         ? "Settlement confirmed by Central Bank SPI clearing network."
                         : finishedCharge.getFailureReason()
         );
+
+        // Dispatch cryptographically signed webhook notification
+        String eventType = finishedCharge.getStatus() == TransactionStatus.SETTLED
+                ? "PIX_PAYMENT_SETTLED"
+                : "PIX_PAYMENT_FAILED";
+        webhookDispatcher.dispatch(finishedCharge, eventType);
 
         return ChargeResponse.fromDomain(finishedCharge);
     }

@@ -147,5 +147,40 @@ public class ChargeApplicationService implements CreateChargeUseCase, GetChargeU
                 "OPERATIONAL"
         );
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChargeAuditLogResponse> getTimeline(UUID id) {
+        // Valida existência da cobrança
+        if (chargeRepository.findById(id).isEmpty()) {
+            throw new ChargeNotFoundException(id);
+        }
+
+        return auditPort.findLogsByChargeId(id)
+                .stream()
+                .map(ChargeAuditLogResponse::fromEntity)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String exportCsv() {
+        List<Charge> charges = chargeRepository.findAll(0, 1000);
+        StringBuilder sb = new StringBuilder();
+        sb.append("id,tx_id,end_to_end_id,pix_key,pix_key_type,amount,status,created_at,settled_at\n");
+
+        for (Charge c : charges) {
+            sb.append(c.getId()).append(",")
+              .append(c.getTxId()).append(",")
+              .append(c.getEndToEndId()).append(",")
+              .append(c.getPixKey()).append(",")
+              .append(c.getPixKeyType()).append(",")
+              .append(c.getAmount()).append(",")
+              .append(c.getStatus()).append(",")
+              .append(c.getCreatedAt()).append(",")
+              .append(c.getSettledAt() != null ? c.getSettledAt() : "").append("\n");
+        }
+        return sb.toString();
+    }
 }
 

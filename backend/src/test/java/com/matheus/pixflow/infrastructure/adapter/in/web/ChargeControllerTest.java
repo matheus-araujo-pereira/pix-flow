@@ -58,7 +58,7 @@ class ChargeControllerTest {
                 id,
                 "tx" + id.toString().replace("-", "").substring(0, 24),
                 "E00000000202610111200abc123456789",
-                "12345678909",
+                "52998224725",
                 PixKeyType.CPF,
                 new BigDecimal("150.00"),
                 "Test Charge",
@@ -80,7 +80,7 @@ class ChargeControllerTest {
         when(createChargeUseCase.create(any(CreateChargeRequest.class))).thenReturn(response);
 
         CreateChargeRequest request = new CreateChargeRequest(
-                "12345678909",
+                "52998224725",
                 PixKeyType.CPF,
                 new BigDecimal("150.00"),
                 "Test Charge"

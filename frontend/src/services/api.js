@@ -35,6 +35,7 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // Single Charge Operations
   async createCharge(payload) {
     return request('/api/v1/charges', {
       method: 'POST',
@@ -42,12 +43,16 @@ export const api = {
     });
   },
 
-  async listCharges(page = 0, size = 20) {
+  async listCharges(page = 0, size = 50) {
     return request(`/api/v1/charges?page=${page}&size=${size}`);
   },
 
   async getChargeById(id) {
     return request(`/api/v1/charges/${id}`);
+  },
+
+  async getChargeTimeline(id) {
+    return request(`/api/v1/charges/${id}/timeline`);
   },
 
   async cancelCharge(id) {
@@ -62,6 +67,30 @@ export const api = {
     });
   },
 
+  // Batch Charge Operations
+  async createBatchCharges(payload) {
+    return request('/api/v1/charges/batch', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Webhooks
+  async listWebhooks(page = 0, size = 50) {
+    return request(`/api/v1/webhooks?page=${page}&size=${size}`);
+  },
+
+  async getWebhookById(id) {
+    return request(`/api/v1/webhooks/${id}`);
+  },
+
+  async replayWebhook(id) {
+    return request(`/api/v1/webhooks/${id}/replay`, {
+      method: 'POST',
+    });
+  },
+
+  // Metrics & Latency
   async getMetrics() {
     return request('/api/v1/metrics');
   },
@@ -76,5 +105,9 @@ export const api = {
       return { latency: null, online: false, error: err.message };
     }
   },
-};
 
+  // Export CSV Helper
+  getExportCsvUrl() {
+    return `${API_BASE}/api/v1/charges/export`;
+  },
+};

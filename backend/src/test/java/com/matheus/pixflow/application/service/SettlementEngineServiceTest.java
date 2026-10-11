@@ -31,6 +31,9 @@ class SettlementEngineServiceTest {
     @Mock
     private SettlementAuditPort auditPort;
 
+    @Mock
+    private WebhookDispatcherService webhookDispatcher;
+
     private SettlementEngineService engineService;
 
     @BeforeEach
@@ -39,6 +42,7 @@ class SettlementEngineServiceTest {
         engineService = new SettlementEngineService(
                 chargeRepository,
                 auditPort,
+                webhookDispatcher,
                 0L,
                 0L,
                 new BigDecimal("50000.00")

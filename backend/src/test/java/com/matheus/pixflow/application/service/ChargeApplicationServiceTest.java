@@ -164,5 +164,30 @@ class ChargeApplicationServiceTest {
         // 8 settled out of 9 finished (8+1) -> 88.9%
         assertEquals(88.9, metrics.successRatePercentage());
     }
+
+    @Test
+    @DisplayName("Should return timeline logs for charge")
+    void shouldReturnTimeline() {
+        UUID id = UUID.randomUUID();
+        Charge charge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        when(chargeRepository.findById(id)).thenReturn(Optional.of(charge));
+        when(auditPort.findLogsByChargeId(id)).thenReturn(List.of());
+
+        var timeline = service.getTimeline(id);
+        assertNotNull(timeline);
+        assertTrue(timeline.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should export transactions as CSV")
+    void shouldExportCsv() {
+        Charge charge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        when(chargeRepository.findAll(0, 1000)).thenReturn(List.of(charge));
+
+        String csv = service.exportCsv();
+        assertNotNull(csv);
+        assertTrue(csv.contains("tx_id"));
+        assertTrue(csv.contains("dev@pixflow.com"));
+    }
 }
 

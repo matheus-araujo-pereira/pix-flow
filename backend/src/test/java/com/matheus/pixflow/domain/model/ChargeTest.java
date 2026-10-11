@@ -16,12 +16,12 @@ class ChargeTest {
     @Test
     @DisplayName("Should successfully create a charge with PENDING status and valid BR Code")
     void shouldCreateChargeSuccessfully() {
-        Charge charge = Charge.create("12345678909", PixKeyType.CPF, new BigDecimal("150.00"), "Software License");
+        Charge charge = Charge.create("52998224725", PixKeyType.CPF, new BigDecimal("150.00"), "Software License");
 
         assertNotNull(charge.getId());
         assertNotNull(charge.getTxId());
         assertNotNull(charge.getEndToEndId());
-        assertEquals("12345678909", charge.getPixKey());
+        assertEquals("52998224725", charge.getPixKey());
         assertEquals(PixKeyType.CPF, charge.getPixKeyType());
         assertEquals(new BigDecimal("150.00"), charge.getAmount());
         assertEquals("Software License", charge.getDescription());
@@ -130,7 +130,7 @@ class ChargeTest {
                 id,
                 "tx12345",
                 "E00000000202610111200abc123456789",
-                "12345678909",
+                "52998224725",
                 PixKeyType.CPF,
                 new BigDecimal("99.90"),
                 "Restored",

@@ -92,5 +92,10 @@ public class ChargePersistenceAdapter implements ChargeRepositoryPort, Settlemen
         );
         auditLogRepository.save(auditEntity);
     }
+
+    @Override
+    public List<SettlementAuditLogJpaEntity> findLogsByChargeId(UUID chargeId) {
+        return auditLogRepository.findByChargeIdOrderByCreatedAtAsc(chargeId);
+    }
 }
 
