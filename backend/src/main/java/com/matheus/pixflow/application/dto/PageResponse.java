@@ -26,3 +26,4 @@ public record PageResponse<T>(
         return new PageResponse<>(content, page, size, totalElements, totalPages);
     }
 }
+

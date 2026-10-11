@@ -7,3 +7,4 @@ import java.util.UUID;
 public interface CancelChargeUseCase {
     ChargeResponse cancel(UUID id);
 }
+

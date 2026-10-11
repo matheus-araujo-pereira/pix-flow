@@ -117,3 +117,4 @@ public class SqsSettlementConsumer implements SmartLifecycle {
         return running.get();
     }
 }
+

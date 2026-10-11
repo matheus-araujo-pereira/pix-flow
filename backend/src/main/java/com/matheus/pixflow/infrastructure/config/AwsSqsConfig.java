@@ -48,3 +48,4 @@ public class AwsSqsConfig {
         return builder.build();
     }
 }
+

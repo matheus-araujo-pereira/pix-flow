@@ -51,3 +51,4 @@ output "ec2_instance_id" {
   description = "ID of the provisioned EC2 instance"
   value       = aws_instance.app_node.id
 }
+

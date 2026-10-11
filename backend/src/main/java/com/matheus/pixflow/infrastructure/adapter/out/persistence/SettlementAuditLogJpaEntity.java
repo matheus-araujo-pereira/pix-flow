@@ -68,3 +68,4 @@ public class SettlementAuditLogJpaEntity {
     public String getDetails() { return details; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

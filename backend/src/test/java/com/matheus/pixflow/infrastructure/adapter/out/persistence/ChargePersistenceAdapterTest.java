@@ -118,3 +118,4 @@ class ChargePersistenceAdapterTest {
         verify(auditLogRepository, times(1)).save(any(SettlementAuditLogJpaEntity.class));
     }
 }
+

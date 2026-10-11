@@ -63,3 +63,4 @@ class SqsChargeEventPublisherTest {
         assertThrows(RuntimeException.class, () -> publisher.publish(msg));
     }
 }
+

@@ -42,3 +42,4 @@ class TransactionStatusTest {
         assertFalse(TransactionStatus.CANCELLED.canTransitionTo(TransactionStatus.PROCESSING));
     }
 }
+

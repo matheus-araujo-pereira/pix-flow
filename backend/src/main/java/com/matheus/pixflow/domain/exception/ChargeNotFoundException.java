@@ -11,3 +11,4 @@ public class ChargeNotFoundException extends DomainException {
         super(String.format("Charge with TxID '%s' was not found.", txId));
     }
 }
+

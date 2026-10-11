@@ -24,3 +24,4 @@ class EndToEndIdGeneratorTest {
         assertTrue(nullDateId.startsWith("E00000000"));
     }
 }
+

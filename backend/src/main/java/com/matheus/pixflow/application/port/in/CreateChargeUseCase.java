@@ -6,3 +6,4 @@ import com.matheus.pixflow.application.dto.CreateChargeRequest;
 public interface CreateChargeUseCase {
     ChargeResponse create(CreateChargeRequest request);
 }
+

@@ -107,3 +107,4 @@ public class ChargeJpaEntity {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getSettledAt() { return settledAt; }
 }
+

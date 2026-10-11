@@ -6,3 +6,4 @@ awslocal sqs create-queue --queue-name pix-settlement-queue --region us-east-1 |
 
 echo "LocalStack SQS Queues created successfully:"
 awslocal sqs list-queues --region us-east-1
+

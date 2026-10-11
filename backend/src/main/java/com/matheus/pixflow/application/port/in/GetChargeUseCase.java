@@ -10,3 +10,4 @@ public interface GetChargeUseCase {
     ChargeResponse getByTxId(String txId);
     PageResponse<ChargeResponse> listAll(int page, int size);
 }
+

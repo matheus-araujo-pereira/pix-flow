@@ -41,3 +41,4 @@ public enum PixKeyType {
         return key.trim();
     }
 }
+

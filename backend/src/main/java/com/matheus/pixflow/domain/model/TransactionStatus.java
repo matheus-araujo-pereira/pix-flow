@@ -29,3 +29,4 @@ public enum TransactionStatus {
         return this == SETTLED || this == FAILED || this == CANCELLED;
     }
 }
+

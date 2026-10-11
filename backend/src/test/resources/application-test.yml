@@ -34,3 +34,4 @@ pixflow:
     failure-threshold-amount: 50000.00
   cors:
     allowed-origins: "*"
+

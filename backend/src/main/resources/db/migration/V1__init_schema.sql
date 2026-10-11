@@ -37,3 +37,4 @@ CREATE TABLE IF NOT EXISTS settlement_audit_logs (
 
 CREATE INDEX IF NOT EXISTS idx_audit_charge_id ON settlement_audit_logs (charge_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created_at ON settlement_audit_logs (created_at DESC);
+

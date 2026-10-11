@@ -28,3 +28,4 @@ public class InMemoryChargeEventPublisher implements ChargeEventPublisherPort {
         return queue;
     }
 }
+

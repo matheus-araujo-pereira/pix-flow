@@ -16,3 +16,4 @@ public interface SpringDataAuditLogRepository extends JpaRepository<SettlementAu
     @Query("SELECT AVG(a.latencyMs) FROM SettlementAuditLogJpaEntity a WHERE a.newStatus = :status AND a.latencyMs > 0")
     Double calculateAverageLatencyByStatus(TransactionStatus status);
 }
+

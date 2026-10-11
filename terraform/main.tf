@@ -334,3 +334,4 @@ resource "aws_instance" "app_node" {
     Name = "${var.project_name}-node-01"
   }
 }
+

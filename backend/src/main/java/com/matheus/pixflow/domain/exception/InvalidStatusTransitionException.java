@@ -7,3 +7,4 @@ public class InvalidStatusTransitionException extends DomainException {
         super(String.format("Cannot transition transaction from status %s to %s.", currentStatus, targetStatus));
     }
 }
+

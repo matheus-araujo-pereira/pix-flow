@@ -91,3 +91,4 @@ export default function Navbar({ latency, isOnline, onOpenArchitecture }) {
     </header>
   );
 }
+

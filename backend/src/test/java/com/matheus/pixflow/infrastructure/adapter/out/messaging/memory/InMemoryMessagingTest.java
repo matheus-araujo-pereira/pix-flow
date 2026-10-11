@@ -44,3 +44,4 @@ class InMemoryMessagingTest {
         assertFalse(worker.isRunning());
     }
 }
+

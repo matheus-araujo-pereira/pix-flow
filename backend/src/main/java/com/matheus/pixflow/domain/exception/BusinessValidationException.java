@@ -5,3 +5,4 @@ public class BusinessValidationException extends DomainException {
         super(message);
     }
 }
+

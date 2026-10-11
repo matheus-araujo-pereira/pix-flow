@@ -24,3 +24,4 @@ public interface SpringDataChargeRepository extends JpaRepository<ChargeJpaEntit
     @Query("SELECT c FROM ChargeJpaEntity c ORDER BY c.createdAt DESC")
     List<ChargeJpaEntity> findAllPaged(Pageable pageable);
 }
+

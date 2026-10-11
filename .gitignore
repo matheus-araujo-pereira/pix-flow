@@ -35,3 +35,4 @@ Thumbs.db
 # Docker / LocalStack data
 .localstack/
 localstack_data/
+

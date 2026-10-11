@@ -165,3 +165,4 @@ class ChargeApplicationServiceTest {
         assertEquals(88.9, metrics.successRatePercentage());
     }
 }
+

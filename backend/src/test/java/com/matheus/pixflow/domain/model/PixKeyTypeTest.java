@@ -72,3 +72,4 @@ class PixKeyTypeTest {
         assertThrows(BusinessValidationException.class, () -> type.validate(key));
     }
 }
+

@@ -15,3 +15,4 @@ s3_bucket_name      = "pixflow-settlement-receipts-demo"
 # Set to true when running against LocalStack (100% Free locally)
 use_localstack      = false
 localstack_endpoint = "http://localhost:4566"
+

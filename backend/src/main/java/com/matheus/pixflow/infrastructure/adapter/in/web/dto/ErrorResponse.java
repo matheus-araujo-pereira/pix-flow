@@ -35,3 +35,4 @@ public record ErrorResponse(
         return new ErrorResponse(Instant.now(), status, error, message, path, fieldErrors);
     }
 }
+

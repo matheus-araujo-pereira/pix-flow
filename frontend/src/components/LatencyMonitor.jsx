@@ -94,3 +94,4 @@ export default function LatencyMonitor({ metrics, latency }) {
     </div>
   );
 }
+

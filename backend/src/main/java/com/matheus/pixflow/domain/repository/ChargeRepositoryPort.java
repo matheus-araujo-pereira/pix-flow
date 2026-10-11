@@ -18,3 +18,4 @@ public interface ChargeRepositoryPort {
     BigDecimal sumSettledAmount();
     Double calculateAverageSettlementDurationMs();
 }
+

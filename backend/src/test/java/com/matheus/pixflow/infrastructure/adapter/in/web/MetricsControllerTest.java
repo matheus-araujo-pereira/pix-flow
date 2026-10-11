@@ -50,3 +50,4 @@ class MetricsControllerTest {
                 .andExpect(jsonPath("$.systemStatus").value("OPERATIONAL"));
     }
 }
+

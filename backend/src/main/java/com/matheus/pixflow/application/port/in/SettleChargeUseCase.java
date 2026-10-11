@@ -7,3 +7,4 @@ import java.util.UUID;
 public interface SettleChargeUseCase {
     ChargeResponse triggerSettlement(UUID id);
 }
+

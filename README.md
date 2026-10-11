@@ -437,3 +437,4 @@ backend/target/site/jacoco/index.html
 <div align="center">
   <sub>Desenvolvido com foco em excelência arquitetural, portabilidade e resiliência transacional sob Java 21, AWS e Linux.</sub>
 </div>
+

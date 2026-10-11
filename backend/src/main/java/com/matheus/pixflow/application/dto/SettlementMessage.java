@@ -14,3 +14,4 @@ public record SettlementMessage(
         return new SettlementMessage(chargeId, txId, amount, Instant.now());
     }
 }
+

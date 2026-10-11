@@ -143,3 +143,4 @@ export default function QrCodeModal({ charge, onClose, onSettle, settling }) {
     </div>
   );
 }
+

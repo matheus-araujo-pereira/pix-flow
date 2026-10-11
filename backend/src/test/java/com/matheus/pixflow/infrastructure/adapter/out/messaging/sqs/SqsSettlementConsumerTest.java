@@ -85,3 +85,4 @@ class SqsSettlementConsumerTest {
         verify(sqsClient, atLeastOnce()).deleteMessage(any(DeleteMessageRequest.class));
     }
 }
+
