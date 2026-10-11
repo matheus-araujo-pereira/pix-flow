@@ -12,12 +12,12 @@
 [![Terraform](https://img.shields.io/badge/Terraform-1.8+-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
 [![JaCoCo Coverage](https://img.shields.io/badge/JaCoCo-92%25%20Coverage-44CC11?style=for-the-badge&logo=codecov&logoColor=white)](https://www.jacoco.org/)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel_Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://pix-flow.vercel.app)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel_Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://frontend-hazel-six-05z2k7m6sk.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 <br/>
 
-[🚀 Live Demo Web na Vercel](https://pix-flow.vercel.app) • [📖 Swagger / OpenAPI Docs](https://pix-flow-backend.onrender.com/swagger-ui.html) • [🏗️ Arquitetura Técnica](#-arquitetura-do-sistema) • [☁️ Guia de Deploy 100% Gratuito](#-guia-de-deploy-100-gratuito)
+[🚀 Live Demo Web na Vercel](https://frontend-hazel-six-05z2k7m6sk.vercel.app) • [📖 Swagger / OpenAPI Docs](https://pix-flow-backend.onrender.com/swagger-ui.html) • [🏗️ Arquitetura Técnica](#-arquitetura-do-sistema) • [☁️ Guia de Deploy 100% Gratuito](#-guia-de-deploy-100-gratuito)
 
 </div>
 
