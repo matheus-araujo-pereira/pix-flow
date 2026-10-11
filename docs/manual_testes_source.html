@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PixFlow - Manual Oficial de Testes & Homologação</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.5;
+      font-size: 10.5pt;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    h1, h2, h3, h4 {
+      color: #0f172a;
+      font-weight: 700;
+      margin-top: 1.2em;
+      margin-bottom: 0.5em;
+    }
+    h1 {
+      font-size: 22pt;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 6px;
+    }
+    h2 {
+      font-size: 15pt;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 4px;
+      margin-top: 1.6em;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 12pt;
+      color: #1e3a8a;
+      margin-top: 1.2em;
+      page-break-after: avoid;
+    }
+    p, ul, ol {
+      margin-top: 0.3em;
+      margin-bottom: 0.6em;
+    }
+    .cover-page {
+      page-break-after: always;
+      text-align: center;
+      padding-top: 90px;
+    }
+    .cover-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 4px;
+      margin-bottom: 25px;
+    }
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      border: none;
+    }
+    .cover-subtitle {
+      font-size: 14pt;
+      color: #475569;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+    .cover-meta {
+      margin-top: 140px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 25px;
+      font-size: 9.5pt;
+      color: #64748b;
+      line-height: 1.8;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 9.5pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    code {
+      font-family: "Courier New", Courier, monospace;
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 9pt;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background: #09090b;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 8.5pt;
+      font-family: "Courier New", Courier, monospace;
+      overflow-x: auto;
+      margin: 8px 0 14px 0;
+      line-height: 1.45;
+      border: 1px solid #27272a;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .badge-pending { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-processing { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-settled { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-failed { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-canceled { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .callout {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      padding: 10px 14px;
+      margin: 12px 0;
+      font-size: 9pt;
+      color: #166534;
+      border-radius: 0 4px 4px 0;
+    }
+    .callout-warning {
+      background: #fffbeb;
+      border-left: 4px solid #d97706;
+      color: #92400e;
+    }
+    .callout-info {
+      background: #f0f9ff;
+      border-left: 4px solid #0284c7;
+      color: #075985;
+    }
+    .scenario-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 14px;
+      background: #ffffff;
+    }
+    .scenario-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CAPA -->
+  <div class="cover-page">
+    <div class="cover-badge">DOCUMENTO DE HOMOLOGAÇÃO & ENGENHARIA DE SOFTWARE</div>
+    <div class="cover-title">⚡ PixFlow</div>
+    <div class="cover-subtitle">Manual Oficial de Testes, Homologação e Auditoria Técnica</div>
+    <p style="max-width: 500px; margin: 0 auto; color: #64748b; font-size: 10.5pt;">
+      Guia técnico completo para validação funcional, testes de concorrência, auditoria de segurança criptográfica (HMAC-SHA256) e verificação de esteira CI/CD com 100% de cobertura de código.
+    </p>
+
+    <div class="cover-meta">
+      <strong>Autor:</strong> Matheus Araújo Pereira — Cloud DevOps Engineer<br/>
+      <strong>Repositório Oficial:</strong> github.com/matheus-araujo-pereira/pix-flow<br/>
+      <strong>Ambientes Homologados:</strong> Vercel (Frontend SPA) • Render (Core Backend Java 21) • Neon (PostgreSQL Serverless)<br/>
+      <strong>Versão do Motor:</strong> 1.0.0-PROD • <strong>Licença:</strong> MIT Open Source • <strong>Custo Operacional:</strong> 100% Gratuito (Free Tier)
+    </div>
+  </div>
+
+  <!-- SUMÁRIO EXECUTIVO -->
+  <h2>1. Visão Geral da Arquitetura & Topologia de Testes</h2>
+  <p>
+    O <strong>PixFlow</strong> é um motor de mensageria e liquidação assíncrona de pagamentos instantâneos (padrão BACEN / SPI). Ele adota os princípios de <em>Clean Architecture (Arquitetura Hexagonal)</em> para garantir desacoplamento estrito entre a borda síncrona (recepção de ordens de pagamento via HTTP/JSON) e o processamento de liquidação bancária assíncrona gerenciado por workers de alta resiliência via <strong>AWS SQS</strong> (ou motor in-memory local).
+  </p>
+
+  <div class="callout callout-info">
+    <strong>URLs Públicas para Testes Online:</strong><br/>
+    • <strong>Interface Web Minimalista (Vercel):</strong> <a href="https://frontend-hazel-six-05z2k7m6sk.vercel.app">https://frontend-hazel-six-05z2k7m6sk.vercel.app</a><br/>
+    • <strong>Swagger / Documentação OpenAPI (Render):</strong> <a href="https://pix-flow-backend.onrender.com/swagger-ui.html">https://pix-flow-backend.onrender.com/swagger-ui.html</a><br/>
+    • <strong>Healthcheck Actuator:</strong> <code>https://pix-flow-backend.onrender.com/actuator/health</code>
+  </div>
+
+  <h3>Diagrama de Ciclo de Estados da Transação</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Estado</th>
+        <th>Descrição</th>
+        <th>Transições Permitidas</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-pending">PENDING</span></td>
+        <td>Cobrança criada com EndToEndId e BR Code gerados; aguarda processamento do worker ou pagamento.</td>
+        <td>➔ PROCESSING, CANCELED, SETTLED</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-processing">PROCESSING</span></td>
+        <td>Worker retirou o evento da fila SQS; efetuando comunicação com clearing house e validações de saldo.</td>
+        <td>➔ SETTLED, FAILED</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-settled">SETTLED</span></td>
+        <td>Liquidação confirmada com sucesso; webhook assinado com HMAC-SHA256 emitido para o parceiro.</td>
+        <td>(Estado Final Imutável)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-failed">FAILED</span></td>
+        <td>Falha na liquidação bancária (ex: valor acima do threshold ou erro na câmara de compensação).</td>
+        <td>(Estado Final Imutável)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-canceled">CANCELED</span></td>
+        <td>Cobrança cancelada a pedido do usuário antes do início da liquidação financeira.</td>
+        <td>(Estado Final Imutável)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- MATRIZ DE DADOS -->
+  <div class="page-break"></div>
+  <h2>2. Matriz de Massa de Dados & Validadores Canônicos (Módulo 11)</h2>
+  <p>
+    O motor PixFlow implementa no domínio matemático estrito a validação <strong>Módulo 11</strong> para identificadores de pessoas físicas (CPF) e jurídicas (CNPJ). Chaves com dígitos verificadores incorretos ou formadas por números repetidos (ex: <code>111.111.111-11</code>) são rejeitadas na borda com código <strong>HTTP 422 Unprocessable Entity</strong>.
+  </p>
+
+  <h3>Tabela de Chaves Canônicas Recomendadas para Testes</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Valor para Teste</th>
+        <th>Resultado Esperado</th>
+        <th>Notas de Homologação</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>CPF</strong></td>
+        <td><code>52998224725</code> (ou <code>529.982.247-25</code>)</td>
+        <td><span class="badge badge-settled">VÁLIDO</span></td>
+        <td>Dígitos verificadores calculados via algoritmo oficial da Receita Federal.</td>
+      </tr>
+      <tr>
+        <td><strong>CPF</strong></td>
+        <td><code>12345678911</code></td>
+        <td><span class="badge badge-failed">REJEITADO (422)</span></td>
+        <td>Dígito verificador inválido. Retorna erro canônico Módulo 11.</td>
+      </tr>
+      <tr>
+        <td><strong>CPF</strong></td>
+        <td><code>11111111111</code></td>
+        <td><span class="badge badge-failed">REJEITADO (422)</span></td>
+        <td>Sequência de dígitos idênticos rejeitada preventivamente.</td>
+      </tr>
+      <tr>
+        <td><strong>CNPJ</strong></td>
+        <td><code>04252011000110</code> (ou formatado)</td>
+        <td><span class="badge badge-settled">VÁLIDO</span></td>
+        <td>CNPJ corporativo com pesos de 2 a 9 conferidos no Módulo 11.</td>
+      </tr>
+      <tr>
+        <td><strong>CNPJ</strong></td>
+        <td><code>00000000000199</code></td>
+        <td><span class="badge badge-failed">REJEITADO (422)</span></td>
+        <td>Dígitos verificadores de controle incorretos.</td>
+      </tr>
+      <tr>
+        <td><strong>EMAIL</strong></td>
+        <td><code>devops@pixflow.io</code></td>
+        <td><span class="badge badge-settled">VÁLIDO</span></td>
+        <td>Conforme padrão RFC 5322.</td>
+      </tr>
+      <tr>
+        <td><strong>PHONE</strong></td>
+        <td><code>+5511999998888</code></td>
+        <td><span class="badge badge-settled">VÁLIDO</span></td>
+        <td>Padrão internacional ITU-T E.164 com código do país (+55).</td>
+      </tr>
+      <tr>
+        <td><strong>RANDOM</strong></td>
+        <td><code>a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d</code></td>
+        <td><span class="badge badge-settled">VÁLIDO</span></td>
+        <td>Chave aleatória EVP padrão UUID v4 (36 caracteres alfanuméricos).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- GUIA WEB SPA -->
+  <h2>3. Guia Passo a Passo: Testes na Interface Web (SPA Vercel)</h2>
+  <p>
+    A interface do PixFlow foi desenvolvida com React, Vite e Tailwind CSS, focada em simplicidade operacional, alta densidade de dados e estética austera. A navegação sincroniza o estado via URLs com hash: <code>#terminal</code>, <code>#ledger</code>, <code>#stress</code>, <code>#webhooks</code> e <code>#tutorial</code>.
+  </p>
+
+  <div class="scenario-box">
+    <div class="scenario-header">
+      <span>TELA 1: Terminal de Emissão PIX (#terminal)</span>
+      <span class="badge badge-pending">EMISSÃO SÍNCRONA</span>
+    </div>
+    <p><strong>Objetivo:</strong> Emitir cobrança instantânea, validar máscara do formulário e gerar QR Code EMVCo.</p>
+    <ol>
+      <li>Acesse a aba <strong>"Terminal PIX"</strong>.</li>
+      <li>Selecione o tipo de chave (ex: <code>CPF</code>) e clique em um dos atalhos de preenchimento rápido (ex: <code>529.982.247-25</code>).</li>
+      <li>Informe o valor (ex: <code>R$ 150,00</code>) e a descrição (ex: <code>Serviço Cloud DevOps</code>).</li>
+      <li>(Opcional) Insira uma URL de Webhook de retorno (ex: <code>https://webhook.site/teste</code>).</li>
+      <li>Clique no botão <strong>"Emitir Cobrança PIX"</strong>.</li>
+      <li><strong>Resultado Esperado:</strong> Um card verde com o EndToEndId padrão BACEN é exibido, com o payload do Pix Copia e Cola (Tag 00 a Tag 63) e o botão para exibir o modal do QR Code.</li>
+    </ol>
+  </div>
+
+  <div class="scenario-box">
+    <div class="scenario-header">
+      <span>TELA 2: Livro-Razão & Gaveta de Auditoria (#ledger)</span>
+      <span class="badge badge-settled">AUDITORIA IMUTÁVEL</span>
+    </div>
+    <p><strong>Objetivo:</strong> Rastrear status em tempo real, abrir a timeline do worker e exportar dados em CSV.</p>
+    <ol>
+      <li>Acesse a aba <strong>"Livro-Razão"</strong>.</li>
+      <li>Visualize a lista de transações ordenadas cronologicamente com filtros por status (PENDING, SETTLED, etc.).</li>
+      <li>Clique em qualquer linha para abrir a <strong>Gaveta Lateral de Inspeção (Transaction Drawer)</strong>.</li>
+      <li>Analise a <strong>Timeline do Worker</strong>: visualize os passos <code>CREATED</code> ➔ <code>SQS_ENQUEUED</code> ➔ <code>SETTLEMENT_STARTED</code> ➔ <code>SETTLED</code> com a latência calculada em milissegundos.</li>
+      <li>Clique em <strong>"Exportar Livro-Razão (CSV)"</strong> para baixar a planilha auditável formatada com todos os dados.</li>
+    </ol>
+  </div>
+
+  <div class="page-break"></div>
+  <div class="scenario-box">
+    <div class="scenario-header">
+      <span>TELA 3: Laboratório de Carga & Concorrência (#stress)</span>
+      <span class="badge badge-processing">HIGH-THROUGHPUT</span>
+    </div>
+    <p><strong>Objetivo:</strong> Testar o pool de threads e capacidade de processamento em lote sob alta concorrência.</p>
+    <ol>
+      <li>Acesse a aba <strong>"Stress Lab"</strong>.</li>
+      <li>Selecione a quantidade de transações para disparo simultâneo (5, 10 ou 20 transações).</li>
+      <li>Clique no botão <strong>"Disparar Lote de Concorrência"</strong>.</li>
+      <li><strong>Resultado Esperado:</strong> O motor Spring Boot processa as requisições em threads assíncronas paralelas. A interface exibe a taxa de Throughput (TPS - Transações por Segundo), a latência total em milissegundos e a lista de cobranças emitidas no lote.</li>
+    </ol>
+  </div>
+
+  <div class="scenario-box">
+    <div class="scenario-header">
+      <span>TELA 4: Auditoria de Webhooks & Verificador Criptográfico (#webhooks)</span>
+      <span class="badge badge-settled">HMAC-SHA256 & REPLAY</span>
+    </div>
+    <p><strong>Objetivo:</strong> Inspecionar notificações assinadas, validar o hash criptográfico e simular tentativas de fraude.</p>
+    <ol>
+      <li>Acesse a aba <strong>"Webhooks & HMAC"</strong>.</li>
+      <li>Selecione qualquer notificação enviada na lista lateral.</li>
+      <li>Inspecione o cabeçalho <code>X-Signature-SHA256</code> (hash hexadecimal de 64 caracteres) e o payload JSON transmitido.</li>
+      <li>Clique em <strong>"Replay Webhook"</strong>: o motor gera uma nova tentativa de entrega com timestamp e assinatura atualizados.</li>
+      <li>No painel inferior <strong>"Laboratório de Verificação Criptográfica"</strong>, clique em <strong>"Verificar com API Backend"</strong> ➔ Retorno: <span class="badge badge-settled">Assinatura VÁLIDA (Autêntica)</span>.</li>
+      <li>Clique no botão <strong>"Simular Fraude / Adulteração"</strong> (que altera o valor da cobrança no JSON) e clique novamente em verificar ➔ Retorno imediato: <span class="badge badge-failed">Assinatura INVÁLIDA (Adulterada)</span>, demonstrando a mitigação de fraudes.</li>
+    </ol>
+  </div>
+
+  <div class="scenario-box">
+    <div class="scenario-header">
+      <span>TELA 5: Roteiro Interativo com 6 Testes Automatizados em 1-Clique (#tutorial)</span>
+      <span class="badge badge-pending">TESTE GUIADO</span>
+    </div>
+    <p><strong>Objetivo:</strong> Executar todos os testes da homologação através de botões diretos sem precisar digitar nada.</p>
+    <ol>
+      <li>Acesse a aba <strong>"Roteiro & Testes"</strong>.</li>
+      <li>Execute os botões sequencialmente:
+        <ul>
+          <li><strong>Teste 1:</strong> "Executar Emissão Happy Path (CPF Válido)"</li>
+          <li><strong>Teste 2:</strong> "Testar Rejeição de CPF Inválido (Módulo 11)"</li>
+          <li><strong>Teste 3:</strong> "Emitir Cobrança com CNPJ Empresarial"</li>
+          <li><strong>Teste 4:</strong> "Emitir e Cancelar Imediatamente (Rollback)"</li>
+          <li><strong>Teste 5:</strong> "Disparar Carga Concorrente de 5 Transações"</li>
+          <li><strong>Teste 6:</strong> "Inspecionar Auditoria & HMAC de Webhooks"</li>
+        </ul>
+      </li>
+      <li>Todos os testes exibem confirmação com toasts em tempo real e redirecionam para a auditoria dos dados.</li>
+    </ol>
+  </div>
+
+  <!-- GUIA REST / CURL -->
+  <div class="page-break"></div>
+  <h2>4. Guia Passo a Passo: Testes via Terminal & API REST (cURL)</h2>
+  <p>
+    Todos os endpoints podem ser homologados diretamente via terminal utilizando <code>curl</code> e <code>jq</code> contra a API em nuvem (ou <code>http://localhost:8080</code> no ambiente local).
+  </p>
+
+  <h3>4.1. Cenário 1: Emissão Happy Path (CPF Válido)</h3>
+  <pre>curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pixKey": "52998224725",
+    "pixKeyType": "CPF",
+    "amount": 150.00,
+    "description": "Liquidação em Nuvem",
+    "webhookUrl": "https://webhook.site/audit-log"
+  }' | jq .</pre>
+  <p><strong>Resposta Esperada (HTTP 201 Created):</strong></p>
+  <pre>{
+  "id": "e4c83a12-8610-41bf-a849-0129bb8e2efb",
+  "endToEndId": "E00000000202610111200ABCD12345678",
+  "pixKey": "52998224725",
+  "pixKeyType": "CPF",
+  "amount": 150.00,
+  "status": "PENDING",
+  "qrCodePayload": "00020126580014br.gov.bcb.pix0136e4c83a12-8610-41bf-a849-0129bb8e2efb5204000053039865406150.005802BR5913PIXFLOW ENGINE6009SAO PAULO62070503***6304E8A1",
+  "createdAt": "2026-10-11T12:00:00Z"
+}</pre>
+
+  <h3>4.2. Cenário 2: Validação Módulo 11 (Rejeição de CPF Inválido)</h3>
+  <pre>curl -s -i -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pixKey": "12345678911",
+    "pixKeyType": "CPF",
+    "amount": 50.00
+  }'</pre>
+  <p><strong>Resposta Esperada (HTTP 422 Unprocessable Entity):</strong></p>
+  <pre>HTTP/2 422
+content-type: application/json
+
+{
+  "status": 422,
+  "error": "UNPROCESSABLE_ENTITY",
+  "message": "CPF inválido: os dígitos verificadores informados não atendem ao cálculo oficial do Módulo 11.",
+  "timestamp": "2026-10-11T12:01:00Z"
+}</pre>
+
+  <h3>4.3. Cenário 3: Cancelamento de Cobrança PENDING</h3>
+  <pre># 1. Cria cobrança
+CHARGE_ID=$(curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
+  -H "Content-Type: application/json" \
+  -d '{"pixKey":"admin@pixflow.io","pixKeyType":"EMAIL","amount":35.00}' | jq -r .id)
+
+# 2. Cancela antes da liquidação
+curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges/$CHARGE_ID/cancel | jq '{id, status}'</pre>
+  <p><strong>Resposta Esperada (HTTP 200 OK):</strong> <code>{ "id": "...", "status": "CANCELED" }</code></p>
+
+  <div class="page-break"></div>
+  <h3>4.4. Cenário 4: Auditoria da Timeline do Worker</h3>
+  <pre>curl -s https://pix-flow-backend.onrender.com/api/v1/charges/$CHARGE_ID/timeline | jq .</pre>
+  <p><strong>Resposta Esperada (Array Cronológico de Eventos):</strong></p>
+  <pre>[
+  { "previousStatus": null, "newStatus": "PENDING", "latencyMs": 0, "createdAt": "2026-10-11T12:00:00Z" },
+  { "previousStatus": "PENDING", "newStatus": "PROCESSING", "latencyMs": 850, "createdAt": "2026-10-11T12:00:01Z" },
+  { "previousStatus": "PROCESSING", "newStatus": "SETTLED", "latencyMs": 1320, "createdAt": "2026-10-11T12:00:02Z" }
+]</pre>
+
+  <h3>4.5. Cenário 5: Verificação Criptográfica de Assinatura HMAC-SHA256</h3>
+  <pre>curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/webhooks/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": "{\"chargeId\":\"e4c83a12-8610-41bf-a849-0129bb8e2efb\",\"status\":\"SETTLED\",\"amount\":150.00}",
+    "signature": "ba6c72e41f059c2567dfb642ec30fa8e6a578a1098e945c57b85041ff34e2f81"
+  }' | jq .</pre>
+  <p><strong>Resposta Esperada:</strong> <code>{ "valid": true, "algorithm": "HmacSHA256" }</code></p>
+
+  <!-- GUIA DOCKER & LOCALSTACK -->
+  <h2>5. Guia de Testes Locais com Docker Compose & LocalStack</h2>
+  <p>
+    Para execução 100% offline no Fedora 44 (ou qualquer distribuição Linux), o projeto fornece um <code>docker-compose.yml</code> que inicializa o Core Backend, o banco PostgreSQL 16 e o emulador de nuvem AWS <strong>LocalStack 3.7</strong> em um único comando:
+  </p>
+
+  <pre># 1. Subir toda a infraestrutura local
+docker compose up -d --build
+
+# 2. Verificar saúde dos serviços
+docker compose ps
+
+# 3. Validar criação das filas SQS no LocalStack
+docker exec -it pixflow-localstack awslocal sqs list-queues
+
+# 4. Inspecionar mensagens em tempo real na fila
+docker exec -it pixflow-localstack awslocal sqs receive-message \
+  --queue-url http://localhost:4566/000000000000/pix-settlement-queue
+
+# 5. Acessar banco PostgreSQL local
+docker exec -it pixflow-postgres psql -U pixflow -d pixflow -c "SELECT id, pix_key, status, amount FROM charges LIMIT 5;"</pre>
+
+  <!-- QUALIDADE & JACOCO -->
+  <div class="page-break"></div>
+  <h2>6. Suíte de Testes Automatizados no Backend (141 Testes & 100% JaCoCo)</h2>
+  <p>
+    A esteira de integração contínua do GitHub Actions (<code>.github/workflows/ci-cd.yml</code>) impõe a execução mandatória da suíte de testes com JUnit 5, Mockito e MockMvc.
+  </p>
+
+  <h3>Execução Local no Fedora 44</h3>
+  <pre>cd backend
+chmod +x mvnw
+./mvnw clean test jacoco:report</pre>
+
+  <h3>Resultados Verificados da Cobertura de Código</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Métrica JaCoCo</th>
+        <th>Total no Projeto</th>
+        <th>Coberto pelos Testes</th>
+        <th>Percentual Atingido</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Instruções de Bytecode (INSTRUCTION)</strong></td>
+        <td>3.427</td>
+        <td>3.427</td>
+        <td><strong style="color: #16a34a;">100.00%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Ramificações Lógicas (BRANCH)</strong></td>
+        <td>173</td>
+        <td>173</td>
+        <td><strong style="color: #16a34a;">100.00%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Linhas de Código (LINE)</strong></td>
+        <td>782</td>
+        <td>782</td>
+        <td><strong style="color: #16a34a;">100.00%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Métodos (METHOD)</strong></td>
+        <td>168</td>
+        <td>168</td>
+        <td><strong style="color: #16a34a;">100.00%</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Classes de Domínio & Aplicação</strong></td>
+        <td>35</td>
+        <td>35</td>
+        <td><strong style="color: #16a34a;">100.00%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- TROUBLESHOOTING -->
+  <h2>7. Troubleshooting & FAQ de Homologação</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Sintoma / Dúvida</th>
+        <th>Causa Raiz Técnica</th>
+        <th>Solução Operacional</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Primeira requisição na Vercel demora ~40 segundos.</td>
+        <td><em>Cold start</em> da instância gratuita do Render (hiberna após 15 min de inatividade).</td>
+        <td>Aguarde o aquecimento inicial. O banner amarelo na UI informa o estado de reativação. As requisições seguintes responderão em &lt; 50ms.</td>
+      </tr>
+      <tr>
+        <td>Erro 422 ao emitir cobrança com CPF/CNPJ.</td>
+        <td>A chave informada não atende à fórmula matemática do Módulo 11 da Receita Federal.</td>
+        <td>Utilize os atalhos de preenchimento rápido fornecidos no formulário (ex: <code>529.982.247-25</code>).</td>
+      </tr>
+      <tr>
+        <td>Mensagem não compensada na fila local.</td>
+        <td>Fila LocalStack não criada na inicialização.</td>
+        <td>Execute <code>awslocal sqs create-queue --queue-name pix-settlement-queue</code> ou reinicie o compose com <code>docker compose up -d</code>.</td>
+      </tr>
+      <tr>
+        <td>Erro de CORS ao testar via browser local.</td>
+        <td>Origin <code>http://localhost:5173</code> não autorizado.</td>
+        <td>O <code>CorsConfig.java</code> já autoriza <code>localhost:5173</code>, <code>localhost:3000</code> e <code>https://*.vercel.app</code> dinamicamente com credenciais.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <br/><br/>
+  <div style="text-align: center; font-size: 9pt; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 15px;">
+    <strong>PixFlow: Event-Driven Payment & Settlement Engine</strong><br/>
+    Engenharia de Qualidade, Cloud DevOps & Arquitetura de Pagamentos Instantâneos.<br/>
+    Documentação gerada e validada em 2026 para o portfólio de Matheus Araújo Pereira.
+  </div>
+
+</body>
+</html>

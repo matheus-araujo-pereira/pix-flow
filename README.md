@@ -17,7 +17,7 @@
 
 <br/>
 
-[🚀 Live Demo Web na Vercel](https://frontend-hazel-six-05z2k7m6sk.vercel.app) • [📖 Swagger / OpenAPI Docs](https://pix-flow-backend.onrender.com/swagger-ui.html) • [🏗️ Arquitetura Técnica](#-arquitetura-do-sistema) • [🧪 Roteiro de Testes](#-roteiro-de-testes--homologação) • [☁️ Deploy 100% Gratuito](#-guia-de-deploy-100-gratuito)
+[🚀 Live Demo Web na Vercel](https://frontend-hazel-six-05z2k7m6sk.vercel.app) • [📖 Swagger / OpenAPI Docs](https://pix-flow-backend.onrender.com/swagger-ui.html) • [📄 Manual de Testes (PDF)](docs/MANUAL_DE_TESTES_PIXFLOW.pdf) • [🏗️ Arquitetura Técnica](#-arquitetura-do-sistema) • [🧪 Manual de Testes](#-manual-de-testes--homologação) • [☁️ Deploy 100% Gratuito](#-guia-de-deploy-100-gratuito)
 
 </div>
 
@@ -149,6 +149,10 @@ pix-flow/
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yml                # Esteira automatizada (Testes, JaCoCo, Node, Terraform, Docker)
+├── docs/
+│   ├── MANUAL_DE_TESTES_PIXFLOW.pdf # Manual Oficial de Testes diagramado em PDF (13 páginas)
+│   ├── MANUAL_DE_TESTES.md          # Manual de Testes e Homologação Técnica em Markdown
+│   └── manual_testes_source.html    # Código-fonte HTML diagramado para geração do PDF
 ├── backend/
 │   ├── src/
 │   │   ├── main/
@@ -225,29 +229,80 @@ A documentação interativa com Swagger UI está acessível em `/swagger-ui.html
 
 ---
 
-## 🧪 Roteiro de Testes & Homologação
+## 🧪 Manual de Testes & Homologação
 
-A interface web inclui uma aba exclusiva **"Roteiro & Testes"** com botões de 1 clique para executar cada cenário interativamente:
+> 📄 **Documentação Oficial em PDF:** O manual técnico completo para homologação com 13 páginas diagramadas e tabelas de validação está disponível para download em [**docs/MANUAL_DE_TESTES_PIXFLOW.pdf**](docs/MANUAL_DE_TESTES_PIXFLOW.pdf). Para a versão em markdown, veja [**docs/MANUAL_DE_TESTES.md**](docs/MANUAL_DE_TESTES.md).
 
-### Cenário 1: Happy Path de Liquidação
-- **Objetivo**: Validar emissão com chave CPF válida (`529.982.247-25`), enfileiramento e compensação após 1200ms.
+---
+
+### 1. Matriz de Massa de Dados & Validadores Canônicos (Módulo 11)
+
+O motor valida rigorosamente identificadores no domínio. Dados com dígitos verificadores incorretos ou formados por números repetidos são rejeitados com `HTTP 422 Unprocessable Entity`:
+
+| Tipo de Chave | Valor Canônico para Teste | Status Esperado | Regra Validada |
+| :--- | :--- | :---: | :--- |
+| **CPF (Válido)** | `52998224725` (ou `529.982.247-25`) | `VÁLIDO` | Dígitos verificadores Módulo 11 da Receita Federal. |
+| **CPF (Inválido)** | `12345678911` | `REJEITADO (422)` | Dígito verificador matemático incorreto. |
+| **CPF (Repetido)** | `11111111111` | `REJEITADO (422)` | Sequência proibida de 11 dígitos repetidos. |
+| **CNPJ (Válido)** | `04252011000110` (ou formatado) | `VÁLIDO` | CNPJ com pesos 2 a 9 e cálculo Módulo 11. |
+| **CNPJ (Inválido)**| `00000000000199` | `REJEITADO (422)` | Dígitos verificadores de controle incorretos. |
+| **E-mail (Válido)**| `devops@pixflow.io` | `VÁLIDO` | Sintaxe em conformidade com a RFC 5322. |
+| **Telefone** | `+5511999998888` | `VÁLIDO` | Padrão internacional ITU-T E.164 (+55). |
+| **Chave EVP** | `a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d` | `VÁLIDO` | Chave aleatória formato UUID v4 (36 chars). |
+
+---
+
+### 2. Roteiro de Homologação na Interface Web (SPA Vercel)
+
+A interface SPA minimalista permite navegar diretamente com sincronização de URLs hash:
+
+1. **Terminal PIX ([#terminal](https://frontend-hazel-six-05z2k7m6sk.vercel.app/#terminal))**:
+   - Clique em qualquer atalho de chave rápida (ex: `529.982.247-25`), defina o valor (ex: `R$ 150,00`) e clique em **"Emitir Cobrança PIX"**.
+   - Valide o `EndToEndId` gerado (32 caracteres), o payload do BR Code e clique em **"Ver QR Code"** para abrir o modal gráfico.
+2. **Livro-Razão & Gaveta de Auditoria ([#ledger](https://frontend-hazel-six-05z2k7m6sk.vercel.app/#ledger))**:
+   - Clique em qualquer linha para abrir a gaveta lateral (**Transaction Drawer**).
+   - Inspecione a **Linha do Tempo (Timeline do Worker)**: acompanhe a latência de cada transição (`CREATED` ➔ `SQS_ENQUEUED` ➔ `SETTLEMENT_STARTED` ➔ `SETTLED`).
+   - Clique em **"Exportar Livro-Razão (CSV)"** para obter o extrato completo em planilha.
+3. **Stress Lab ([#stress](https://frontend-hazel-six-05z2k7m6sk.vercel.app/#stress))**:
+   - Selecione um lote de 5, 10 ou 20 transações simultâneas e clique em **"Disparar Lote de Concorrência"**.
+   - Analise o Throughput calculado (**TPS**), a latência agregada em ms e o status das cobranças processadas em threads paralelas.
+4. **Auditoria de Webhooks & Verificador Criptográfico ([#webhooks](https://frontend-hazel-six-05z2k7m6sk.vercel.app/#webhooks))**:
+   - Inspecione as notificações enviadas e o cabeçalho `X-Signature-SHA256`.
+   - Clique em **"Replay Webhook"** para re-despachar a notificação com nova assinatura e timestamp.
+   - No laboratório inferior, clique em **"Verificar com API Backend"** (`Assinatura VÁLIDA`) e depois em **"Simular Fraude / Adulteração"** (`Assinatura INVÁLIDA`), comprovando a detecção de fraude por HMAC.
+5. **Roteiro Interativo com 6 Testes em 1-Clique ([#tutorial](https://frontend-hazel-six-05z2k7m6sk.vercel.app/#tutorial))**:
+   - Execute sequencialmente os 6 testes pré-programados para validar toda a plataforma sem digitar nada.
+
+---
+
+### 3. Roteiro de Testes via Terminal & cURL
+
+#### Cenário 1: Emissão Happy Path (CPF Válido)
 ```bash
 curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
   -H "Content-Type: application/json" \
-  -d '{"pixKey":"52998224725","pixKeyType":"CPF","amount":150.00,"description":"Cenário 1"}' | jq .
+  -d '{
+    "pixKey": "52998224725",
+    "pixKeyType": "CPF",
+    "amount": 150.00,
+    "description": "Liquidação Happy Path",
+    "webhookUrl": "https://webhook.site/audit-log"
+  }' | jq .
 ```
 
-### Cenário 2: Validação Canônica Módulo 11 (Rejeição de CPF Inválido)
-- **Objetivo**: Confirmar que o motor rejeita chaves matematicamente inválidas com HTTP 422 Unprocessable Entity.
+#### Cenário 2: Validação Canônica Módulo 11 (Rejeição de CPF Inválido)
 ```bash
 curl -s -i -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
   -H "Content-Type: application/json" \
-  -d '{"pixKey":"12345678911","pixKeyType":"CPF","amount":50.00}'
-# Retorna: HTTP/2 422 Unprocessable Entity - CPF inválido (dígitos verificadores incorretos)
+  -d '{
+    "pixKey": "12345678911",
+    "pixKeyType": "CPF",
+    "amount": 50.00
+  }'
+# Retorna: HTTP/2 422 Unprocessable Entity com mensagem descritiva do Módulo 11
 ```
 
-### Cenário 3: Cancelamento de Cobrança Pré-Liquidação
-- **Objetivo**: Estornar cobrança em estado PENDING antes da liquidação financeira definitiva.
+#### Cenário 3: Cancelamento de Cobrança Pré-Liquidação
 ```bash
 # 1. Cria cobrança
 ID=$(curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
@@ -258,8 +313,12 @@ ID=$(curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges \
 curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges/$ID/cancel | jq '{id, status}'
 ```
 
-### Cenário 4: Teste de Carga e Concorrência (Batch)
-- **Objetivo**: Disparar lote concorrente de 10 transações paralelas e obter o Throughput (TPS).
+#### Cenário 4: Inspeção da Linha do Tempo (Timeline do Worker)
+```bash
+curl -s https://pix-flow-backend.onrender.com/api/v1/charges/$ID/timeline | jq .
+```
+
+#### Cenário 5: Teste de Carga e Concorrência em Lote (Batch)
 ```bash
 curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges/batch \
   -H "Content-Type: application/json" \
@@ -272,11 +331,44 @@ curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/charges/batch \
   }' | jq .
 ```
 
-### Cenário 5: Auditoria de Webhook e Assinatura HMAC-SHA256
-- **Objetivo**: Verificar histórico de notificações assíncronas e assinatura do cabeçalho `X-Signature-SHA256`.
+#### Cenário 6: Verificação de Integridade Criptográfica HMAC-SHA256
 ```bash
-curl -s https://pix-flow-backend.onrender.com/api/v1/webhooks | jq .
+curl -s -X POST https://pix-flow-backend.onrender.com/api/v1/webhooks/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payload": "{\"chargeId\":\"e4c83a12-8610-41bf-a849-0129bb8e2efb\",\"status\":\"SETTLED\",\"amount\":150.00}",
+    "signature": "ba6c72e41f059c2567dfb642ec30fa8e6a578a1098e945c57b85041ff34e2f81"
+  }' | jq .
 ```
+
+---
+
+### 4. Testes Locais com Docker Compose & LocalStack
+```bash
+# 1. Subir backend, banco PostgreSQL e LocalStack AWS SQS
+docker compose up -d --build
+
+# 2. Listar filas SQS no LocalStack
+docker exec -it pixflow-localstack awslocal sqs list-queues
+
+# 3. Consumir mensagem da fila
+docker exec -it pixflow-localstack awslocal sqs receive-message \
+  --queue-url http://localhost:4566/000000000000/pix-settlement-queue
+
+# 4. Conectar diretamente ao banco PostgreSQL
+docker exec -it pixflow-postgres psql -U pixflow -d pixflow -c "SELECT id, status, amount FROM charges LIMIT 5;"
+```
+
+---
+
+### 5. Execução dos Testes Automatizados no Backend (100% JaCoCo)
+```bash
+cd backend
+chmod +x mvnw
+./mvnw clean verify -B
+```
+- **Total:** 141 testes automatizados (0 falhas, 0 erros, 0 pulados).
+- **Cobertura:** 100.00% de instruções (3.427 / 3.427) e 100.00% de branches (173 / 173). Relatório gerado em `backend/target/site/jacoco/index.html`.
 
 ---
 
