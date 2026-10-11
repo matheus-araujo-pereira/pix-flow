@@ -329,3 +329,4 @@ export default function TutorialView({ onNavigate, onInspectCharge }) {
     </div>
   );
 }
+

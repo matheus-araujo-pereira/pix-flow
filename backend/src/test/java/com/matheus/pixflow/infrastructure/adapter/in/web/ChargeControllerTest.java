@@ -202,5 +202,40 @@ class ChargeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SETTLED"));
     }
+
+    @Test
+    @DisplayName("GET /api/v1/charges/{id}/timeline should return audit timeline")
+    void shouldGetTimeline() throws Exception {
+        UUID id = UUID.randomUUID();
+        com.matheus.pixflow.application.dto.ChargeAuditLogResponse logItem =
+                new com.matheus.pixflow.application.dto.ChargeAuditLogResponse(
+                        UUID.randomUUID(),
+                        id,
+                        TransactionStatus.PENDING,
+                        TransactionStatus.PROCESSING,
+                        "WORKER-01",
+                        50L,
+                        "Audit test",
+                        java.time.Instant.now()
+                );
+
+        when(getChargeUseCase.getTimeline(id)).thenReturn(List.of(logItem));
+
+        mockMvc.perform(get("/api/v1/charges/{id}/timeline", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].workerId").value("WORKER-01"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/charges/export should return CSV report")
+    void shouldExportCsv() throws Exception {
+        when(getChargeUseCase.exportCsv()).thenReturn("id,tx_id,amount\n1,tx1,10.00\n");
+
+        mockMvc.perform(get("/api/v1/charges/export"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string(
+                        org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pixflow-extrato.csv\""))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("id,tx_id,amount\n1,tx1,10.00\n"));
+    }
 }
 

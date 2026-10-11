@@ -12,3 +12,4 @@ public interface SpringDataWebhookRepository extends JpaRepository<WebhookDelive
     List<WebhookDeliveryJpaEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
     List<WebhookDeliveryJpaEntity> findByChargeIdOrderByCreatedAtDesc(UUID chargeId);
 }
+

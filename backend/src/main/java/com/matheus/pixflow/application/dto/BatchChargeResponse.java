@@ -19,3 +19,4 @@ public record BatchChargeResponse(
         List<ChargeResponse> charges
 ) {
 }
+

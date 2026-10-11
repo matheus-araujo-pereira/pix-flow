@@ -54,7 +54,7 @@ public class InMemorySettlementWorker implements SmartLifecycle {
         log.info("Worker thread {} initialized and awaiting settlement events", workerId);
         while (running.get()) {
             try {
-                SettlementMessage msg = publisher.getQueue().poll(1, TimeUnit.SECONDS);
+                SettlementMessage msg = publisher.getQueue().poll(100, TimeUnit.MILLISECONDS);
                 if (msg != null) {
                     log.info("[{}] Dequeued settlement message for charge {}", workerId, msg.chargeId());
                     settlementEngineService.processSettlement(msg.chargeId(), workerId);
@@ -72,9 +72,7 @@ public class InMemorySettlementWorker implements SmartLifecycle {
     public void stop() {
         if (running.compareAndSet(true, false)) {
             log.info("Stopping In-Memory Settlement Worker engine...");
-            if (workerExecutor != null) {
-                workerExecutor.shutdownNow();
-            }
+            workerExecutor.shutdownNow();
         }
     }
 

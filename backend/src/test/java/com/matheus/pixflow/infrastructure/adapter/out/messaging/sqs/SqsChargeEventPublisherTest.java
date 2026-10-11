@@ -62,5 +62,16 @@ class SqsChargeEventPublisherTest {
 
         assertThrows(RuntimeException.class, () -> publisher.publish(msg));
     }
+
+    @Test
+    @DisplayName("Should throw runtime exception when SQS client send fails")
+    void shouldThrowOnSqsClientFailure() throws Exception {
+        SettlementMessage msg = SettlementMessage.of(UUID.randomUUID(), "tx123", new BigDecimal("100.00"));
+
+        when(objectMapper.writeValueAsString(msg)).thenReturn("{\"chargeId\":\"test\"}");
+        when(sqsClient.sendMessage(any(SendMessageRequest.class))).thenThrow(new RuntimeException("AWS Network Timeout"));
+
+        assertThrows(RuntimeException.class, () -> publisher.publish(msg));
+    }
 }
 

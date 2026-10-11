@@ -181,13 +181,42 @@ class ChargeApplicationServiceTest {
     @Test
     @DisplayName("Should export transactions as CSV")
     void shouldExportCsv() {
-        Charge charge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
-        when(chargeRepository.findAll(0, 1000)).thenReturn(List.of(charge));
+        Charge pendingCharge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        Charge settledCharge = Charge.create("dev2@pixflow.com", PixKeyType.EMAIL, new BigDecimal("50.00"), "desc");
+        settledCharge.transitionToProcessing();
+        settledCharge.settle();
+        when(chargeRepository.findAll(0, 1000)).thenReturn(List.of(pendingCharge, settledCharge));
 
         String csv = service.exportCsv();
         assertNotNull(csv);
         assertTrue(csv.contains("tx_id"));
         assertTrue(csv.contains("dev@pixflow.com"));
+        assertTrue(csv.contains("dev2@pixflow.com"));
+    }
+
+    @Test
+    @DisplayName("Should throw ChargeNotFoundException when cancelling non-existent charge")
+    void shouldThrowWhenCancellingNonExistentCharge() {
+        UUID id = UUID.randomUUID();
+        when(chargeRepository.findById(id)).thenReturn(Optional.empty());
+        assertThrows(ChargeNotFoundException.class, () -> service.cancel(id));
+    }
+
+    @Test
+    @DisplayName("Should return 100% success rate when zero finished transactions")
+    void shouldReturnDefaultSuccessRateWhenZeroFinished() {
+        when(chargeRepository.countTotal()).thenReturn(0L);
+        when(chargeRepository.countByStatus(any(TransactionStatus.class))).thenReturn(0L);
+        var metrics = service.getMetrics();
+        assertEquals(100.0, metrics.successRatePercentage());
+    }
+
+    @Test
+    @DisplayName("Should throw ChargeNotFoundException when getting timeline for non-existent charge")
+    void shouldThrowWhenGettingTimelineForNonExistentCharge() {
+        UUID id = UUID.randomUUID();
+        when(chargeRepository.findById(id)).thenReturn(Optional.empty());
+        assertThrows(ChargeNotFoundException.class, () -> service.getTimeline(id));
     }
 }
 

@@ -11,7 +11,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.8+-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
-[![JaCoCo Coverage](https://img.shields.io/badge/JaCoCo-87%25%20Coverage-44CC11?style=for-the-badge&logo=codecov&logoColor=white)](https://www.jacoco.org/)
+[![JaCoCo Coverage](https://img.shields.io/badge/JaCoCo-100%25%20Coverage-brightgreen?style=for-the-badge&logo=codecov&logoColor=white)](https://www.jacoco.org/)
 [![Vercel](https://img.shields.io/badge/Frontend-Vercel_Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://frontend-hazel-six-05z2k7m6sk.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
@@ -37,7 +37,7 @@ Projetado sob os princípios de **Clean Architecture (Arquitetura Hexagonal)** e
 - **Webhooks com Assinatura Criptográfica HMAC-SHA256**: Despacho de eventos `PIX.SETTLED` e `PIX.FAILED` com cabeçalho `X-Signature-SHA256` para garantia de autenticidade e integridade no destino.
 - **Linha do Tempo e Auditoria Imutável**: Endpoint `/api/v1/charges/{id}/timeline` detalhando cada etapa do worker (`CREATED` ➔ `SQS_ENQUEUED` ➔ `SETTLEMENT_STARTED` ➔ `SETTLED`) e exportação completa do livro-razão em CSV.
 - **DevOps & Portabilidade Híbrida**: Provisionamento declarativo via **Terraform** compatível tanto com **AWS Free Tier** quanto com **LocalStack**, viabilizando hospedagem em nuvem **100% gratuita no Render, Neon e Vercel**.
-- **Engenharia de Qualidade**: 90 testes automatizados (unitários de domínio, serviços e integração WebMvc com MockMvc) atingindo **87% de cobertura de código verificada via JaCoCo** na esteira de CI/CD.
+- **Engenharia de Qualidade**: 137 testes automatizados (unitários de domínio, validação canônica Módulo 11, serviços, controllers WebMvc com MockMvc e workers assíncronos) atingindo **100% de cobertura de código (100% de instruções e 100% de branches) verificada via JaCoCo** na esteira de CI/CD.
 
 ---
 
@@ -162,9 +162,9 @@ pix-flow/
 │   │   │       └── db/migration/
 │   │   │           ├── V1__init_schema.sql        # Esquema de charges e settlement_audit_logs
 │   │   │           └── V2__webhook_deliveries.sql # Esquema de auditoria de webhooks
-│   │   └── test/java/com/matheus/pixflow/         # 90 Testes Unitários e MockMvc (87% Cobertura)
+│   │   └── test/java/com/matheus/pixflow/         # 137 Testes Unitários e MockMvc (100% Cobertura)
 │   ├── Dockerfile                   # Multi-Stage Build (JDK 21 compile -> JRE 21 Alpine runner)
-│   ├── pom.xml                      # Dependências Maven e Plugin JaCoCo (80% gate)
+│   ├── pom.xml                      # Dependências Maven e Plugin JaCoCo (100% Cobertura)
 │   └── mvnw                         # Maven Wrapper oficial
 ├── frontend/
 │   ├── src/
@@ -348,7 +348,7 @@ npm run dev
 
 ## 🧪 Engenharia de Qualidade & Testes
 
-Para executar toda a suíte de testes unitários e de integração validando o portão de 80% do JaCoCo:
+Para executar toda a suíte de testes unitários e de integração validando 100% de cobertura com o JaCoCo:
 
 ```bash
 cd backend

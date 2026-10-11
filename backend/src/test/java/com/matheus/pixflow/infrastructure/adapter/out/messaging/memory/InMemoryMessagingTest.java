@@ -43,5 +43,53 @@ class InMemoryMessagingTest {
         worker.stop();
         assertFalse(worker.isRunning());
     }
+
+    @Test
+    @DisplayName("Should handle multiple start and stop calls idempotently")
+    void shouldHandleLifecycleIdempotently() {
+        InMemoryChargeEventPublisher publisher = new InMemoryChargeEventPublisher();
+        InMemorySettlementWorker worker = new InMemorySettlementWorker(publisher, settlementEngineService);
+
+        worker.stop(); // stop before start when workerExecutor is null
+
+        worker.start();
+        worker.start();
+        assertTrue(worker.isRunning());
+
+        worker.stop();
+        worker.stop();
+        assertFalse(worker.isRunning());
+    }
+
+    @Test
+    @DisplayName("Should handle processing exception in worker without crashing")
+    void shouldHandleWorkerException() throws Exception {
+        InMemoryChargeEventPublisher publisher = new InMemoryChargeEventPublisher();
+        InMemorySettlementWorker worker = new InMemorySettlementWorker(publisher, settlementEngineService);
+
+        doThrow(new RuntimeException("Simulated worker error"))
+                .when(settlementEngineService).processSettlement(any(), any());
+
+        worker.start();
+        UUID chargeId = UUID.randomUUID();
+        publisher.publish(SettlementMessage.of(chargeId, "tx1", BigDecimal.TEN));
+
+        Thread.sleep(300);
+        worker.stop();
+    }
+
+    @Test
+    @DisplayName("Should handle poll timeout when queue is empty")
+    void shouldHandlePollTimeout() throws Exception {
+        InMemoryChargeEventPublisher publisher = new InMemoryChargeEventPublisher();
+        InMemorySettlementWorker worker = new InMemorySettlementWorker(publisher, settlementEngineService);
+
+        worker.start();
+        // Wait 150ms for poll(100ms) to time out and return null
+        Thread.sleep(150);
+        worker.stop();
+
+        verify(settlementEngineService, never()).processSettlement(any(), any());
+    }
 }
 

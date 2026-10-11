@@ -17,6 +17,8 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,10 +52,20 @@ class SqsSettlementConsumerTest {
     @Test
     @DisplayName("Should start and stop consumer lifecycle cleanly")
     void shouldManageLifecycle() {
+        SqsSettlementConsumer unstarted = new SqsSettlementConsumer(
+                sqsClient,
+                objectMapper,
+                settlementEngineService,
+                "https://sqs.us-east-1.amazonaws.com/123456789012/pix-settlement-queue"
+        );
+        unstarted.stop(); // stops when pollerExecutor is null
+
         assertFalse(consumer.isRunning());
         consumer.start();
+        consumer.start(); // double start
         assertTrue(consumer.isRunning());
         consumer.stop();
+        consumer.stop(); // double stop
         assertFalse(consumer.isRunning());
     }
 
@@ -83,6 +95,62 @@ class SqsSettlementConsumerTest {
 
         verify(settlementEngineService, atLeastOnce()).processSettlement(eq(chargeId), eq("WORKER-AWS-SQS"));
         verify(sqsClient, atLeastOnce()).deleteMessage(any(DeleteMessageRequest.class));
+    }
+
+    @Test
+    @DisplayName("Should handle invalid message body without crashing poller")
+    void shouldHandleInvalidMessageBody() throws Exception {
+        Message invalidMessage = Message.builder()
+                .body("corrupted-body")
+                .receiptHandle("handle-bad")
+                .build();
+
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(ReceiveMessageResponse.builder().messages(invalidMessage).build())
+                .thenReturn(ReceiveMessageResponse.builder().build());
+
+        when(objectMapper.readValue(eq("corrupted-body"), eq(SettlementMessage.class)))
+                .thenThrow(new RuntimeException("Bad JSON"));
+
+        consumer.start();
+        Thread.sleep(150);
+        consumer.stop();
+
+        verify(settlementEngineService, never()).processSettlement(any(), any());
+    }
+
+    @Test
+    @DisplayName("Should handle SQS polling exception and recover normally")
+    void shouldHandlePollingExceptionAndRecover() throws Exception {
+        consumer.backoffMillis = 1;
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenThrow(new RuntimeException("SQS Connection Lost"))
+                .thenReturn(ReceiveMessageResponse.builder().build());
+
+        consumer.start();
+        Thread.sleep(60);
+        consumer.stop();
+
+        assertFalse(consumer.isRunning());
+    }
+
+    @Test
+    @DisplayName("Should handle thread interruption during SQS backoff sleep")
+    void shouldHandlePollingInterruption() throws Exception {
+        consumer.backoffMillis = 5000;
+        CountDownLatch latch = new CountDownLatch(1);
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenAnswer(inv -> {
+                    latch.countDown();
+                    throw new RuntimeException("SQS Connection Lost");
+                });
+
+        consumer.start();
+        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        Thread.sleep(30);
+        consumer.stop();
+
+        assertFalse(consumer.isRunning());
     }
 }
 

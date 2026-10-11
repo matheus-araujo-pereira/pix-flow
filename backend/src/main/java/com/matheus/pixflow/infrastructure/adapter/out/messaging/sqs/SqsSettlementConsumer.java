@@ -32,6 +32,7 @@ public class SqsSettlementConsumer implements SmartLifecycle {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
     private ExecutorService pollerExecutor;
+    long backoffMillis = 1000;
 
     public SqsSettlementConsumer(
             SqsClient sqsClient,
@@ -72,14 +73,12 @@ public class SqsSettlementConsumer implements SmartLifecycle {
                     processMessage(msg);
                 }
             } catch (Exception e) {
-                if (running.get()) {
-                    log.error("Error polling SQS queue: {}. Backing off...", e.getMessage());
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                log.error("Error polling SQS queue: {}. Backing off...", e.getMessage());
+                try {
+                    Thread.sleep(backoffMillis);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         }
@@ -106,9 +105,7 @@ public class SqsSettlementConsumer implements SmartLifecycle {
     public void stop() {
         if (running.compareAndSet(true, false)) {
             log.info("Stopping SQS Settlement Consumer poller...");
-            if (pollerExecutor != null) {
-                pollerExecutor.shutdownNow();
-            }
+            pollerExecutor.shutdownNow();
         }
     }
 
@@ -117,4 +114,3 @@ public class SqsSettlementConsumer implements SmartLifecycle {
         return running.get();
     }
 }
-

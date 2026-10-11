@@ -117,5 +117,26 @@ class ChargePersistenceAdapterTest {
 
         verify(auditLogRepository, times(1)).save(any(SettlementAuditLogJpaEntity.class));
     }
+
+    @Test
+    @DisplayName("Should handle null sum and null average latency returning zero")
+    void shouldHandleNullMetrics() {
+        when(chargeRepository.sumAmountByStatus(TransactionStatus.SETTLED)).thenReturn(null);
+        when(auditLogRepository.calculateAverageLatencyByStatus(TransactionStatus.SETTLED)).thenReturn(null);
+
+        assertEquals(BigDecimal.ZERO, adapter.sumSettledAmount());
+        assertEquals(0.0, adapter.calculateAverageSettlementDurationMs());
+    }
+
+    @Test
+    @DisplayName("Should find audit logs by chargeId")
+    void shouldFindLogsByChargeId() {
+        UUID chargeId = UUID.randomUUID();
+        when(auditLogRepository.findByChargeIdOrderByCreatedAtAsc(chargeId)).thenReturn(List.of());
+
+        List<SettlementAuditLogJpaEntity> logs = adapter.findLogsByChargeId(chargeId);
+        assertNotNull(logs);
+        assertTrue(logs.isEmpty());
+    }
 }
 

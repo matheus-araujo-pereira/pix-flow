@@ -49,6 +49,9 @@ class ChargeTest {
     @DisplayName("Should reject invalid amounts")
     void shouldRejectInvalidAmounts() {
         assertThrows(BusinessValidationException.class, () ->
+                Charge.create("dev@pixflow.com", PixKeyType.EMAIL, null, "desc"));
+
+        assertThrows(BusinessValidationException.class, () ->
                 Charge.create("dev@pixflow.com", PixKeyType.EMAIL, BigDecimal.ZERO, "desc"));
 
         assertThrows(BusinessValidationException.class, () ->
@@ -92,7 +95,10 @@ class ChargeTest {
         Charge chargeDefaultReason = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("50.00"), "Test");
         chargeDefaultReason.transitionToProcessing();
         chargeDefaultReason.fail(null);
-        assertEquals("Settlement rejected by clearing network.", chargeDefaultReason.getFailureReason());
+        Charge chargeBlankReason = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("50.00"), "Test");
+        chargeBlankReason.transitionToProcessing();
+        chargeBlankReason.fail("   ");
+        assertEquals("Settlement rejected by clearing network.", chargeBlankReason.getFailureReason());
     }
 
     @Test

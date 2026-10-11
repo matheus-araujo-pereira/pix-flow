@@ -15,3 +15,4 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
 
 CREATE INDEX IF NOT EXISTS idx_webhook_charge_id ON webhook_deliveries (charge_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_created_at ON webhook_deliveries (created_at DESC);
+

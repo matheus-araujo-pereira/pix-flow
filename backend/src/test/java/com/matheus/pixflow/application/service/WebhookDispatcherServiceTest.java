@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -42,20 +43,47 @@ class WebhookDispatcherServiceTest {
 
         service.dispatch(charge, "PIX_PAYMENT_SETTLED");
 
-        verify(webhookRepository, times(1)).save(any(WebhookDeliveryJpaEntity.class));
+        ArgumentCaptor<WebhookDeliveryJpaEntity> captor = ArgumentCaptor.forClass(WebhookDeliveryJpaEntity.class);
+        verify(webhookRepository, times(1)).save(captor.capture());
+
+        WebhookDeliveryJpaEntity saved = captor.getValue();
+        assertNotNull(saved);
+        assertTrue(saved.getSignature().startsWith("sha256="));
     }
 
     @Test
-    @DisplayName("Should verify valid HMAC-SHA256 signature correctly")
+    @DisplayName("Should handle exception gracefully when saving delivery fails")
+    void shouldHandleExceptionWhenSavingFails() {
+        Charge charge = Charge.create("52998224725", PixKeyType.CPF, new BigDecimal("100.00"), "desc");
+
+        doThrow(new RuntimeException("DB Error")).when(webhookRepository).save(any());
+
+        assertDoesNotThrow(() -> service.dispatch(charge, "PIX_PAYMENT_SETTLED"));
+    }
+
+    @Test
+    @DisplayName("Should verify valid HMAC-SHA256 signature correctly with and without sha256= prefix")
     void shouldVerifySignature() {
         String payload = "{\"test\":\"data\"}";
         Charge charge = Charge.create("52998224725", PixKeyType.CPF, new BigDecimal("100.00"), "desc");
+
+        ArgumentCaptor<WebhookDeliveryJpaEntity> captor = ArgumentCaptor.forClass(WebhookDeliveryJpaEntity.class);
         service.dispatch(charge, "PIX_PAYMENT_SETTLED");
+        verify(webhookRepository).save(captor.capture());
 
-        // Verify with invalid signature
+        String fullSig = captor.getValue().getSignature();
+        String rawSig = fullSig.replace("sha256=", "");
+        String actualPayload = captor.getValue().getPayload();
+
+        // Valid signature with sha256= prefix
+        assertTrue(service.verifySignature(actualPayload, fullSig));
+        // Valid signature without prefix
+        assertTrue(service.verifySignature(actualPayload, rawSig));
+
+        // Invalid signature
         assertFalse(service.verifySignature(payload, "invalid-sig"));
-
-        // Null signature
+        // Null checks
+        assertFalse(service.verifySignature(null, fullSig));
         assertFalse(service.verifySignature(payload, null));
     }
 
@@ -76,5 +104,12 @@ class WebhookDispatcherServiceTest {
         var deliveries = service.getDeliveriesByCharge(chargeId);
         assertNotNull(deliveries);
         assertTrue(deliveries.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalStateException when secretKey is null during HMAC calculation")
+    void shouldThrowWhenSecretKeyIsNull() {
+        WebhookDispatcherService brokenService = new WebhookDispatcherService(webhookRepository, objectMapper, null);
+        assertThrows(IllegalStateException.class, () -> brokenService.verifySignature("payload", "sig"));
     }
 }

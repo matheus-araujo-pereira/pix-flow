@@ -122,5 +122,77 @@ class SettlementEngineServiceTest {
 
         assertEquals(TransactionStatus.SETTLED, response.status());
     }
+
+    @Test
+    @DisplayName("Should simulate clearing latency when delay is configured")
+    void shouldSimulateClearingLatency() {
+        SettlementEngineService engineWithDelay = new SettlementEngineService(
+                chargeRepository,
+                auditPort,
+                webhookDispatcher,
+                2L,
+                5L,
+                new BigDecimal("50000.00")
+        );
+        Charge charge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        UUID id = charge.getId();
+
+        when(chargeRepository.findById(id)).thenReturn(Optional.of(charge));
+        when(chargeRepository.save(any(Charge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChargeResponse response = engineWithDelay.processSettlement(id, "TEST-WORKER-01");
+        assertNotNull(response);
+    }
+
+    @Test
+    @DisplayName("Should handle thread interruption during clearing latency simulation")
+    void shouldHandleInterruptionDuringClearingLatency() {
+        SettlementEngineService engineWithDelay = new SettlementEngineService(
+                chargeRepository,
+                auditPort,
+                webhookDispatcher,
+                1000L,
+                2000L,
+                new BigDecimal("50000.00")
+        );
+        Charge charge = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        UUID id = charge.getId();
+
+        when(chargeRepository.findById(id)).thenReturn(Optional.of(charge));
+        when(chargeRepository.save(any(Charge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Thread.currentThread().interrupt();
+        ChargeResponse response = engineWithDelay.processSettlement(id, "TEST-WORKER-01");
+        assertNotNull(response);
+        Thread.interrupted(); // Clear interrupted status
+
+        // Test with minDelay <= 0 and maxDelay > 0
+        SettlementEngineService engineMixedDelay = new SettlementEngineService(
+                chargeRepository,
+                auditPort,
+                webhookDispatcher,
+                0L,
+                10L,
+                new BigDecimal("50000.00")
+        );
+        Charge cMixed = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        when(chargeRepository.findById(cMixed.getId())).thenReturn(Optional.of(cMixed));
+        when(chargeRepository.save(any(Charge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertNotNull(engineMixedDelay.processSettlement(cMixed.getId(), "TEST-WORKER"));
+
+        // Test with minDelay > 0 and maxDelay <= 0
+        SettlementEngineService engineMinPosMaxZero = new SettlementEngineService(
+                chargeRepository,
+                auditPort,
+                webhookDispatcher,
+                10L,
+                0L,
+                new BigDecimal("50000.00")
+        );
+        Charge cMinPos = Charge.create("dev@pixflow.com", PixKeyType.EMAIL, new BigDecimal("100.00"), "desc");
+        when(chargeRepository.findById(cMinPos.getId())).thenReturn(Optional.of(cMinPos));
+        when(chargeRepository.save(any(Charge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertNotNull(engineMinPosMaxZero.processSettlement(cMinPos.getId(), "TEST-WORKER"));
+    }
 }
 

@@ -308,3 +308,4 @@ export default function LedgerView({ onInspectCharge, refreshTrigger }) {
     </div>
   );
 }
+

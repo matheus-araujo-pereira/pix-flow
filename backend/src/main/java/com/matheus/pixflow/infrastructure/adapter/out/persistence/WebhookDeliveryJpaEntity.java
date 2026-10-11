@@ -68,3 +68,4 @@ public class WebhookDeliveryJpaEntity {
     public Integer getResponseCode() { return responseCode; }
     public Instant getCreatedAt() { return createdAt; }
 }
+

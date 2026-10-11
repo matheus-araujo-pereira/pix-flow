@@ -85,4 +85,14 @@ class PixKeyTypeTest {
     void shouldRejectNullOrEmptyKeys(String key, PixKeyType type) {
         assertThrows(BusinessValidationException.class, () -> type.validate(key));
     }
+
+    @Test
+    @DisplayName("Should return null when sanitizing null key")
+    void shouldReturnNullWhenSanitizingNullKey() {
+        assertNull(PixKeyType.CPF.sanitizeKey(null));
+        assertNull(PixKeyType.CNPJ.sanitizeKey(null));
+        assertNull(PixKeyType.PHONE.sanitizeKey(null));
+        assertNull(PixKeyType.EMAIL.sanitizeKey(null));
+        assertNull(PixKeyType.RANDOM.sanitizeKey(null));
+    }
 }
