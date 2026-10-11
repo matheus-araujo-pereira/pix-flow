@@ -204,3 +204,4 @@ chmod +x mvnw
 - **Ramificações Lógicas (BRANCH):** 173 / 173 (**100.00%**)
 - **Linhas de Código (LINE):** 782 / 782 (**100.00%**)
 - **Relatório HTML JaCoCo:** `backend/target/site/jacoco/index.html`
+
